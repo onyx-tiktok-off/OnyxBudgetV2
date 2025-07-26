@@ -68,16 +68,8 @@
     @keyframes checkMark {
       0%{ transform:scale(0) rotate(-40deg);}
       50%{ transform:scale(1.2) rotate(8deg);}
-      75%{ transform:.92) rotate(-4deg);}
+      75%{ transform:scale(.92) rotate(-4deg);}
       100%{ transform:scale(1) rotate(0);}
-    }
-    .mic-glow {
-      box-shadow: 0 0 0 2px #00d9ff, 0 0 16px 4px #00d9ffbb;
-      animation: micPulse 1.4s infinite alternate;
-    }
-    @keyframes micPulse {
-      0%{ box-shadow: 0 0 0 2px #00d9ff, 0 0 12px 2px #00d9ff55; }
-      100%{ box-shadow: 0 0 0 5px #00d9ff, 0 0 22px 7px #00d9ffbb;}
     }
   </style>
 </head>
@@ -147,116 +139,6 @@ function sortTransactions(arr) {
   const income = arr.filter(t => t.type === "income").sort((a,b)=>b.amount - a.amount);
   const expense = arr.filter(t => t.type === "expense").sort((a,b)=>b.amount - a.amount);
   return [...income, ...expense];
-}
-
-// ----------- SAISIE VOCALE --------------
-function useSpeechRecognition({onResult, lang="fr-FR"}={}) {
-  const [listening, setListening] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const recognitionRef = React.useRef(null);
-
-  function start() {
-    setError("");
-    if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
-      setError("Non supporté sur ce navigateur.");
-      return;
-    }
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!recognitionRef.current) {
-      recognitionRef.current = new Recognition();
-      recognitionRef.current.lang = lang;
-      recognitionRef.current.interimResults = false;
-      recognitionRef.current.maxAlternatives = 1;
-      recognitionRef.current.onresult = (e) => {
-        const res = e.results[0][0].transcript;
-        setListening(false);
-        onResult && onResult(res);
-      };
-      recognitionRef.current.onerror = (e) => {
-        setListening(false);
-        setError("Erreur micro.");
-      };
-      recognitionRef.current.onend = () => setListening(false);
-    }
-    setListening(true);
-    recognitionRef.current.start();
-  }
-  function stop() {
-    if (recognitionRef.current) recognitionRef.current.stop();
-    setListening(false);
-  }
-  React.useEffect(()=>()=>stop(),[]);
-  return {listening, start, stop, error};
-}
-
-// ----------- PARSING NATURAL LANGUAGE ----------
-function parseVoiceExpense(text) {
-  if (!text) return null;
-  text = text.trim();
-  // 1. Montant
-  let montantMatch = text.match(/([+-]?[\d\s]+[.,]?\d*)\s?(€|euro|euros)?/i);
-  let montant = montantMatch ? parseFloat(montantMatch[1].replace(/[ ,]/g,'')) : null;
-
-  // 2. Titre / catégorie (avant montant ou juste avant €)
-  let titre = "", categorie = null;
-  if (montantMatch) {
-    titre = text.slice(0, montantMatch.index).replace(/(payer|payé|acheté|pour|dépensé|j'ai|ai|le|du|la|des|un|une|de)\s+/gi, "").trim();
-    // Essayer de détecter une catégorie
-    const tnorm = normalizeString(titre);
-    const catFound = CATEGORIES.find(cat =>
-      tnorm.includes(normalizeString(cat.name))
-      || normalizeString(cat.name).includes(tnorm)
-      || tnorm.startsWith(normalizeString(cat.name).split(" ")[0])
-    );
-    if (catFound) categorie = catFound;
-  }
-  if (!categorie && titre) {
-    // Fallback: Si titre = "café", catégorie = "Cafés / Bars"...
-    const fallback = [
-      ["café","Cafés / Bars"],["loyer","Logement"],["spotify","Abonnements"],["facture","Énergie / Gaz"],["restaurant","Restaurants"],["courses","Alimentation"],["carburant","Carburant"],["cinéma","Cinéma / Spectacles"],["taxi","Transports en commun"],["impôt","Impôts / Taxes"],["prime","Bonus"],["free","Téléphone"]
-    ];
-    const found = fallback.find(([mot,cat])=>normalizeString(titre).includes(mot));
-    if (found) categorie = CATEGORIES.find(c=>c.name===found[1]);
-  }
-  if (!categorie) categorie = CATEGORIES.find(c=>c.name==="Autre");
-
-  // 3. Type (revenu/dépense)
-  let type = "expense";
-  if (/salaire|revenu|prime|remboursement|remboursé|rembourse/i.test(text)) type = "income";
-
-  // 4. Date (optionnel, sinon aujourd'hui)
-  let now = new Date();
-  let date = now;
-  if (/hier/i.test(text)) date = new Date(now.getTime() - 864e5);
-  if (/avant-hier/i.test(text)) date = new Date(now.getTime() - 2*864e5);
-  let dayMatch = text.match(/(\d{1,2})\s?(janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)/i);
-  if (dayMatch) {
-    let m = ["janv","févr","mars","avr","mai","juin","juil","août","sept","oct","nov","déc"];
-    let d = parseInt(dayMatch[1],10), idx = m.findIndex(mois=>dayMatch[2].toLowerCase().startsWith(mois));
-    if (idx>=0) {
-      let dt = new Date();
-      dt.setMonth(idx);
-      dt.setDate(d);
-      date = dt;
-    }
-  }
-  if (/ce matin|aujourd'hui/i.test(text)) date = now;
-  // 5. Tags (simples)
-  let tags = [];
-  // 6. Nettoyage du titre
-  titre = titre.replace(/^[.,\s-]+|[.,\s-]+$/g,"");
-  if (!titre) titre = categorie.name;
-  // 7. Extraction
-  if (montant === null) return null;
-  return {
-    id: randomId(),
-    title: titre.charAt(0).toUpperCase()+titre.slice(1),
-    amount: montant,
-    date: date,
-    category: categorie,
-    type,
-    tags
-  }
 }
 
 // ---------- BADGE ACHIEVEMENT ----------
@@ -390,12 +272,11 @@ function getDailyBalances(transactions) {
     days: monthDays
   };
 }
-function PremiumChart({transactions, onMouseLeave}) {
+function PremiumChart({transactions}) {
   const chartRef = React.useRef();
   const {labels, data, days} = getDailyBalances(transactions);
   const totalRevenus = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
   const [hoverPoint, setHoverPoint] = React.useState(null);
-
   React.useEffect(()=>{
     if(chartRef.current){
       const ctx = chartRef.current.getContext("2d");
@@ -476,11 +357,6 @@ function PremiumChart({transactions, onMouseLeave}) {
           animation: {duration:900, easing:'easeOutQuint'}
         }
       });
-      // Gestion disparition hoverPoint au leave du canvas
-      chartRef.current.onmouseleave = () => {
-        setHoverPoint(null);
-        onMouseLeave && onMouseLeave();
-      }
     }
     return ()=>{ if(window.myChart) window.myChart.destroy(); }
   },[transactions]);
@@ -512,54 +388,16 @@ function PremiumChart({transactions, onMouseLeave}) {
   );
 }
 
-// ----------- DASHBOARD (avec micro vocal) -----------
-function Dashboard({transactions, onAddTx, onExport, onImport, onVoiceAdd, micState, micError, listening}) {
-  // --- Affichage graphique ON/OFF avec persistence locale
-  const [showChart, setShowChart] = React.useState(true);
-  React.useEffect(()=>{
-    const s = localStorage.getItem('onyx_budget_show_chart');
-    if(s!==null) setShowChart(s==="true");
-  },[]);
-  React.useEffect(()=>{
-    localStorage.setItem('onyx_budget_show_chart', showChart);
-  },[showChart]);
+function Dashboard({transactions, onAddTx, onExport, onImport}) {
   return (
     <div>
       <MetricsCards transactions={transactions} />
-      <div className="flex items-center justify-end px-2 mt-2 mb-2 gap-3">
-        <button
-          className={"font-semibold rounded-xl px-4 py-2 transition shadow " +
-            (showChart ? "bg-[#ef4444]/80 hover:bg-[#ef4444]/90 text-white" : "bg-[#10b981]/80 hover:bg-[#10b981]/90 text-white")}
-          onClick={()=>setShowChart(v=>!v)}
-        >
-          {showChart ? (
-            <><Lucide icon="eye-off" className="inline mr-1" size={18}/> Cacher le graphique</>
-          ) : (
-            <><Lucide icon="eye" className="inline mr-1" size={18}/> Afficher le graphique</>
-          )}
-        </button>
-        <button
-          className={"font-bold rounded-xl px-4 py-2 transition shadow flex items-center gap-2 " +
-            (listening ? "mic-glow bg-[#00d9ff] text-white" : "bg-[#18181b] text-[#00d9ff] hover:bg-[#22223b]")}
-          onClick={onVoiceAdd}
-          disabled={listening}
-          title="Ajouter une dépense à la voix"
-        >
-          <Lucide icon="mic" size={20}/>
-          {listening ? "Enregistrement..." : "Micro"}
-        </button>
-      </div>
-      {micError && (
-        <div className="text-[#ef4444] font-bold text-center mb-2">{micError}</div>
-      )}
-      {showChart && (
-        <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
-          <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
-            <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
-            <PremiumChart transactions={transactions}/>
-          </div>
+      <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
+        <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
+          <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
+          <PremiumChart transactions={transactions}/>
         </div>
-      )}
+      </div>
       <div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}>
         <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
           <Lucide icon="plus-circle"/> Ajouter transaction
@@ -576,7 +414,7 @@ function Dashboard({transactions, onAddTx, onExport, onImport, onVoiceAdd, micSt
   );
 }
 
-// ----------- RESTE INCHANGÉ -----------
+// ---------- RESTE DU CODE ----------
 // (CategorySelect, CategoryFilter, TransactionList, AddOrEditModal, SettingsModal, useLocalTransactions...)
 
 function CategorySelect({cat, setCat, categories}) {
@@ -865,24 +703,6 @@ function App() {
   const [showCheck, setShowCheck] = React.useState(false);
   const [showBadge, setShowBadge] = React.useState(false);
   const [badgeType, setBadgeType] = React.useState(null);
-
-  // ----------- Saisie vocale -----------
-  const [micError, setMicError] = React.useState("");
-  const [lastVoice, setLastVoice] = React.useState("");
-  const {listening, start: startMic, error: errMic} = useSpeechRecognition({
-    onResult: (res) => {
-      setLastVoice(res);
-      let parsed = parseVoiceExpense(res);
-      if (parsed) {
-        handleAddOrEdit(parsed);
-        setMicError("");
-        setTimeout(()=>{setShowCheck(true)},150);
-      } else {
-        setMicError("Désolé, je n'ai pas compris. Réessaie !");
-      }
-    }
-  });
-
   React.useEffect(()=>{
     if(showCheck){
       setTimeout(()=>setShowCheck(false), 1100);
@@ -950,9 +770,6 @@ function App() {
         onAddTx={()=>{setEditTx(null); setShowModal(true);}}
         onExport={handleExport}
         onImport={handleImport}
-        onVoiceAdd={startMic}
-        micError={micError || errMic}
-        listening={listening}
       />
       <TransactionList
         transactions={transactions}
