@@ -84,7 +84,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-
+// --- UTILITAIRES & CONST
 function Lucide(props) {
   React.useEffect(()=>{if(window.lucide) window.lucide.createIcons();},[props.icon]);
   return <i data-lucide={props.icon} className={props.className} style={{display:"inline-block",verticalAlign:"middle",color:props.color||"inherit"}}></i>
@@ -188,30 +188,85 @@ function useSpeechRecognition({onResult, lang="fr-FR"}={}) {
   React.useEffect(()=>()=>stop(),[]);
   return {listening, start, stop, error};
 }
+// ----------- PARSING VOCALE NATURAL LANGUAGE AMÉLIORÉ ----------
+function parseFrenchNumber(str) {
+  const numbers = {
+    "zéro": 0, "zero":0, "un":1, "une":1, "deux":2, "trois":3, "quatre":4, "cinq":5, "six":6, "sept":7, "huit":8, "neuf":9,
+    "dix":10, "onze":11, "douze":12, "treize":13, "quatorze":14, "quinze":15, "seize":16, "vingt":20, "trente":30, "quarante":40, "cinquante":50,
+    "soixante":60, "soixante-dix":70, "soixante dix":70, "quatre-vingt":80, "quatre vingt":80, "quatre-vingt-dix":90, "quatre vingt dix":90,
+    "cent":100, "mille":1000
+  };
+  let tokens = str.toLowerCase().replace(/[\-]/g,' ').split(/[\s,]+/);
+  let total = 0, cur = 0;
+  for(let t of tokens){
+    if(numbers[t] !== undefined){
+      cur += numbers[t];
+    } else if (t==="et") {
+      continue;
+    } else if (t==="cent" || t==="cents") {
+      cur = (cur||1)*100;
+    } else if (t==="mille") {
+      cur = (cur||1)*1000;
+      total += cur; cur = 0;
+    }
+  }
+  return total+cur;
+}
 
-// ----------- PARSING NATURAL LANGUAGE ----------
+function extractAmountFromText(txt) {
+  let match = txt.match(/(\d+[., ]?\d*)\s*(euros?|centimes?|€)?/i);
+  if(match) {
+    let v = match[1].replace(',','.');
+    let val = parseFloat(v);
+    if(match[3] && match[3].toLowerCase().startsWith("centime")){
+      val = val/100;
+    }
+    return { amount: val, rest: txt.replace(match[0],"") };
+  }
+  let mont = 0;
+  let euroMatch = txt.match(/([a-z\s\-]+?)\s*euros?/i);
+  if(euroMatch) {
+    mont += parseFrenchNumber(euroMatch[1]);
+    txt = txt.replace(euroMatch[0],"");
+  }
+  let centMatch = txt.match(/([a-z\s\-]+?)\s*centimes?/i);
+  if(centMatch) {
+    mont += parseFrenchNumber(centMatch[1]) / 100;
+    txt = txt.replace(centMatch[0],"");
+  }
+  let euroAndCent = txt.match(/([a-z\s\-]+?)\s*euros?\s*et?\s*([a-z\s\-]+)?/i);
+  if(euroAndCent) {
+    let euros = parseFrenchNumber(euroAndCent[1]);
+    let centimes = euroAndCent[2] ? parseFrenchNumber(euroAndCent[2]) : 0;
+    if(euros || centimes) mont = euros + (centimes/100);
+  }
+  if(mont>0) return {amount: Math.round(mont*100)/100, rest: txt.replace(/([a-z\s\-]+?)\s*euros?(\s*et\s*[a-z\s\-]+)?/i,"")};
+  let onlyCentMatch = txt.match(/([a-z\s\-]+?)\s*centimes?/i);
+  if(onlyCentMatch) {
+    mont = parseFrenchNumber(onlyCentMatch[1]) / 100;
+    if(mont>0) return {amount: Math.round(mont*100)/100, rest: txt.replace(onlyCentMatch[0],"")};
+  }
+  let arr = txt.split(" ");
+  if(arr.length<=2 && parseFrenchNumber(txt)>0) return {amount:parseFrenchNumber(txt), rest:""};
+  return {amount:null, rest:txt};
+}
 function parseVoiceExpense(text) {
   if (!text) return null;
-  text = text.trim();
-  // 1. Montant
-  let montantMatch = text.match(/([+-]?[\d\s]+[.,]?\d*)\s?(€|euro|euros)?/i);
-  let montant = montantMatch ? parseFloat(montantMatch[1].replace(/[ ,]/g,'')) : null;
-
-  // 2. Titre / catégorie (avant montant ou juste avant €)
-  let titre = "", categorie = null;
-  if (montantMatch) {
-    titre = text.slice(0, montantMatch.index).replace(/(payer|payé|acheté|pour|dépensé|j'ai|ai|le|du|la|des|un|une|de)\s+/gi, "").trim();
-    // Essayer de détecter une catégorie
-    const tnorm = normalizeString(titre);
-    const catFound = CATEGORIES.find(cat =>
-      tnorm.includes(normalizeString(cat.name))
-      || normalizeString(cat.name).includes(tnorm)
-      || tnorm.startsWith(normalizeString(cat.name).split(" ")[0])
-    );
-    if (catFound) categorie = catFound;
-  }
+  text = text.trim().toLowerCase();
+  let {amount, rest} = extractAmountFromText(text);
+  let titre = "";
+  let categorie = null;
+  titre = rest
+    .replace(/payer|payé|acheté|pour|dépensé|j'ai|ai|le|du|la|des|un|une|de|ce matin|ce soir|hier|avant-hier|aujourd'hui|le|à|en|sur|dans/gi, "")
+    .trim();
+  const tnorm = normalizeString(titre);
+  const catFound = CATEGORIES.find(cat =>
+    tnorm.includes(normalizeString(cat.name))
+    || normalizeString(cat.name).includes(tnorm)
+    || tnorm.startsWith(normalizeString(cat.name).split(" ")[0])
+  );
+  if (catFound) categorie = catFound;
   if (!categorie && titre) {
-    // Fallback: Si titre = "café", catégorie = "Cafés / Bars"...
     const fallback = [
       ["café","Cafés / Bars"],["loyer","Logement"],["spotify","Abonnements"],["facture","Énergie / Gaz"],["restaurant","Restaurants"],["courses","Alimentation"],["carburant","Carburant"],["cinéma","Cinéma / Spectacles"],["taxi","Transports en commun"],["impôt","Impôts / Taxes"],["prime","Bonus"],["free","Téléphone"]
     ];
@@ -219,12 +274,8 @@ function parseVoiceExpense(text) {
     if (found) categorie = CATEGORIES.find(c=>c.name===found[1]);
   }
   if (!categorie) categorie = CATEGORIES.find(c=>c.name==="Autre");
-
-  // 3. Type (revenu/dépense)
   let type = "expense";
   if (/salaire|revenu|prime|remboursement|remboursé|rembourse/i.test(text)) type = "income";
-
-  // 4. Date (optionnel, sinon aujourd'hui)
   let now = new Date();
   let date = now;
   if (/hier/i.test(text)) date = new Date(now.getTime() - 864e5);
@@ -241,17 +292,14 @@ function parseVoiceExpense(text) {
     }
   }
   if (/ce matin|aujourd'hui/i.test(text)) date = now;
-  // 5. Tags (simples)
   let tags = [];
-  // 6. Nettoyage du titre
   titre = titre.replace(/^[.,\s-]+|[.,\s-]+$/g,"");
   if (!titre) titre = categorie.name;
-  // 7. Extraction
-  if (montant === null) return null;
+  if (amount === null) return null;
   return {
     id: randomId(),
     title: titre.charAt(0).toUpperCase()+titre.slice(1),
-    amount: montant,
+    amount: amount,
     date: date,
     category: categorie,
     type,
@@ -259,720 +307,395 @@ function parseVoiceExpense(text) {
   }
 }
 
-// ---------- BADGE ACHIEVEMENT ----------
-function BadgeAchievement({show, onClose, type}) {
-  if(!show) return null;
-  let label, color, icon;
-  if(type==="first_income") {label="Premier revenu !";color="#10b981";icon="wallet";}
-  else if(type==="first_saving") {label="Première épargne !";color="#ff006e";icon="piggy-bank";}
-  else {return null;}
+    // --------------- HEADER -----------------
+function Header({onAdd, onImport, onExport, showChart, toggleChart}) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-      <div className="badge-anim-pop flex flex-col items-center px-6 py-4 rounded-3xl shadow-2xl border-2 border-white/10 glass"
-        style={{background:"linear-gradient(135deg,rgba(20,20,36,0.97),rgba(10,0,32,0.85))"}}
-      >
-        <Lucide icon={icon} size={48} color={color} />
-        <span className="mt-3 text-lg font-bold text-white">{label}</span>
-        <span className="mt-1 px-3 py-1 rounded-lg text-xs" style={{background:color+"22", color}}>{type==="first_income" ? "Bravo pour ton premier revenu !" : "Épargner, c'est gagner."}</span>
+    <header className="onyx-header flex items-center justify-between px-5 pt-4 pb-1 select-none">
+      <div className="flex items-center gap-4">
+        <img src="https://i.ibb.co/5WMnx7y6/8ba349756916.png" alt="logo" style={{height:52, width:"auto", marginRight:10}} />
+        <span className="onyx-title tracking-tight select-none" style={{fontWeight:500, fontSize:"2.2rem", fontFamily:'Montserrat,Inter,sans-serif', letterSpacing:".01em"}}>Onyx Budget V2</span>
       </div>
-    </div>
-  );
-}
-
-// ---------- CHECKMARK ANIM -----------
-function SuccessCheckmark({show}) {
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <div className="check-anim bg-white/90 rounded-full shadow-2xl flex items-center justify-center" style={{width:96,height:96}}>
-        <svg width="64" height="64" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" strokeWidth="5"/>
-          <path fill="none" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16"/>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// ------------- HEADER ---------------
-function Header() {
-  return (
-    <header className="onyx-header flex items-center px-6 py-5 mb-4" style={{zIndex:20, position:"relative", minHeight:"80px"}}>
-      <div className="flex items-center gap-5">
-        <img src="https://i.ibb.co/5WMnx7y6/8ba349756916.png"
-          alt="Onyx Budget"
-          className="h-[99px] w-[99px]"
-          style={{objectFit:"contain", background:"none", border:"none", boxShadow:"none"}}/>
-        <span className="onyx-title">Onyx Budget V2</span>
+      <div className="flex gap-2 items-center">
+        <button className="hover:scale-110 transition rounded-xl px-4 py-1 text-base font-medium glass" style={{background:"#19181d99"}} onClick={onAdd}>
+          <Lucide icon="plus-circle" className="inline mr-1" /> Ajouter
+        </button>
+        <button className="hover:scale-110 transition rounded-xl px-4 py-1 text-base font-medium glass" style={{background:"#19181d99"}} onClick={onImport}>
+          <Lucide icon="upload-cloud" className="inline mr-1" /> Import
+        </button>
+        <button className="hover:scale-110 transition rounded-xl px-4 py-1 text-base font-medium glass" style={{background:"#19181d99"}} onClick={onExport}>
+          <Lucide icon="download-cloud" className="inline mr-1" /> Export
+        </button>
+        <button className={"rounded-full p-2 ml-2 "+(showChart?"bg-[#282c38]":"glass")} title={showChart?"Cacher le graphique":"Afficher le graphique"} onClick={toggleChart}>
+          <Lucide icon={showChart?"eye-off":"bar-chart-3"} />
+        </button>
       </div>
     </header>
   );
 }
 
-// ----------- METRICS CARDS -----------
-function MetricsCards({transactions}) {
-  const totalIncome = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
-  const totalExpense = sum(transactions.filter(t=>t.type==="expense"), t=>+t.amount);
-  const savings = sum(
-    transactions.filter(t=>
-      t.category && normalizeString(t.category.name) === normalizeString("Épargne")
-    ),
-    t=>+t.amount
-  );
-  const balance = totalIncome-totalExpense;
+// --------------- BADGE ANIMÉ -----------------
+function Badge({label, icon, color, className=""}) {
   return (
-    <div className="grid grid-cols-4 gap-4 my-4 overflow-x-auto min-w-[680px]">
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="credit-card" color="#6366f1"/>
-          <span className="uppercase text-xs opacity-60 text-white">SOLDE</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center text-white">{formatAmount(balance)}</div>
-      </div>
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="download" color="#10b981"/>
-          <span className="uppercase text-xs opacity-60 text-white">REVENUS</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(totalIncome)}</div>
-      </div>
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="upload" color="#ef4444"/>
-          <span className="uppercase text-xs opacity-60 text-white">DÉPENSES</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(totalExpense)}</div>
-      </div>
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="piggy-bank" color="#ff006e"/>
-          <span className="uppercase text-xs opacity-60 text-white">ÉCONOMIES</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(savings)}</div>
-      </div>
+    <div className={`flex items-center px-3 py-1 rounded-xl font-medium text-sm badge-anim-pop shadow-md`} style={{background:color+"44",color}} >
+      <Lucide icon={icon} className="mr-2" color={color}/>
+      {label}
     </div>
   );
 }
 
-// ------------- GRAPHIQUE PREMIUM -----------
-function getMonthDays(startDate, transactions) {
-  const txSorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let firstDate = startDate;
-  if (txSorted.length) {
-    firstDate = new Date(txSorted[0].date);
+// --------------- CONFETTI / ANIM -----------------
+function fireConfetti() {
+  if(window.confetti){
+    window.confetti({
+      particleCount: 90,
+      spread: 64,
+      angle: 72+Math.random()*30,
+      origin: { x: 0.4+0.2*Math.random(), y: 0.85 }
+    });
   }
-  const year = firstDate.getFullYear();
-  const month = firstDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const days = [];
-  for(let i=1; i<=daysInMonth; i++) {
-    days.push(new Date(year, month, i));
-  }
-  return days;
 }
-function getDailyBalances(transactions) {
-  if (!transactions.length) return {labels:[], data:[]};
-  const monthDays = getMonthDays(new Date(), transactions);
-  const sorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let balances = [];
-  let current = 0;
-  let idx = 0;
-  monthDays.forEach(day=>{
-    while (idx<sorted.length && (new Date(sorted[idx].date)).toDateString() === day.toDateString()) {
-      current += (sorted[idx].type==="income"?+sorted[idx].amount:-+sorted[idx].amount);
-      idx++;
-    }
-    balances.push(current);
+
+// --------------- DASHBOARD + GRAPHIQUE -----------------
+function Dashboard({transactions, onEdit, showChart, solde, epargne}) {
+  // Données pour le graphique intelligent
+  const sorted = React.useMemo(()=>[...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date)),[transactions]);
+  const totalRevenus = sum(transactions.filter(t=>t.type==="income"), t=>t.amount);
+  let points = [];
+  let cumul = 0;
+  let maxSolde = totalRevenus;
+  sorted.forEach(t=>{
+    if(t.type==="income") cumul += t.amount;
+    else cumul -= t.amount;
+    points.push({date: new Date(t.date), cumul: Math.round(cumul*100)/100, t});
+    if(cumul>maxSolde) maxSolde = cumul;
   });
-  return {
-    labels: monthDays.map(d=>`${d.getDate().toString().padStart(2,'0')} ${d.toLocaleString("fr-FR",{month:"short"})}`),
-    data: balances,
-    days: monthDays
-  };
-}
-function PremiumChart({transactions, onMouseLeave}) {
+  if(!points.length && totalRevenus>0){
+    points = [{date:new Date(),cumul:totalRevenus,t:{}}];
+  }
+  // Format pour labels : 
+  const labels = points.map(pt=>formatDate(pt.date));
+  const dataCumul = points.map(pt=>pt.cumul);
   const chartRef = React.useRef();
-  const {labels, data, days} = getDailyBalances(transactions);
-  const totalRevenus = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
-  const [hoverPoint, setHoverPoint] = React.useState(null);
 
   React.useEffect(()=>{
-    if(chartRef.current){
-      const ctx = chartRef.current.getContext("2d");
-      if(window.myChart) window.myChart.destroy();
-      let gradient = ctx.createLinearGradient(0,0,0,200);
-      gradient.addColorStop(0, "#00d9ffbb");
-      gradient.addColorStop(1, "#1a003380");
-      let gradientLine = ctx.createLinearGradient(0,0,chartRef.current.width,0);
-      gradientLine.addColorStop(0,"#00d9ff");
-      gradientLine.addColorStop(0.5,"#6366f1");
-      gradientLine.addColorStop(1,"#ff006e");
-      window.myChart = new window.Chart(ctx, {
-        type:"line",
-        data:{
-          labels: labels.length ? labels : ["—"],
-          datasets: [{
-            label:"Solde",
-            data: data.length ? data : [0],
-            fill: true,
+    if(!showChart) return;
+    if(!chartRef.current) return;
+    let chart = chartRef.current._chart;
+    if(chart) chart.destroy();
+    const ctx = chartRef.current.getContext("2d");
+    chartRef.current._chart = new window.Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Solde restant",
+            data: dataCumul,
+            borderColor: "#00d9ff",
+            backgroundColor: "#00d9ff22",
+            pointBackgroundColor: "#fff",
+            pointRadius: 5,
             borderWidth: 3,
-            borderColor: gradientLine,
-            backgroundColor: gradient,
-            pointRadius: data.length>1 ? 5 : 12,
-            pointBackgroundColor: "#00d9ff",
-            pointBorderWidth: 2,
-            pointBorderColor: "#fff",
-            pointHoverRadius: 15,
-            tension: 0.44,
-          }]
-        },
-        options:{
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            tooltip: {
-              enabled: false,
-              external: function(context) {
-                const {chart, tooltip} = context;
-                if (!chart) return;
-                if(tooltip && tooltip.dataPoints && tooltip.dataPoints.length) {
-                  setHoverPoint({
-                    index: tooltip.dataPoints[0].dataIndex,
-                    value: tooltip.dataPoints[0].parsed.y,
-                    label: tooltip.dataPoints[0].label
-                  });
-                } else {
-                  setHoverPoint(null);
-                }
-              }
-            },
-          },
-          elements: {
-            line: { borderJoinStyle:"round", borderCapStyle:"round" }
-          },
-          scales:{
-            y:{
-              min: 0,
-              max: totalRevenus > 0 ? Math.ceil(totalRevenus/10)*10 : undefined,
-              ticks:{
-                color:"#fff",
-                font:{size:15, weight:700},
-                callback: function(value) { return formatAmount(value);}
-              },
-              grid:{color:"rgba(99,102,241,0.10)", lineWidth:1.2},
-              border:{color:"rgba(99,102,241,0.17)"},
-              beginAtZero:true,
-            },
-            x:{
-              ticks:{color:"#fff", font:{size:14}},
-              grid:{color:"rgba(99,102,241,0.07)",drawOnChartArea:false},
-              border:{color:"rgba(99,102,241,0.17)"},
-              autoSkip: false,
-              maxRotation: 0,
-              minRotation: 0
+            fill: false,
+            tension:.45
+          }
+        ]
+      },
+      options: {
+        plugins:{
+          legend: {display:false},
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `Solde : ${formatAmount(ctx.parsed.y)}`
             }
+          }
+        },
+        scales: {
+          y: {
+            ticks: {color:'#fff',font:{weight:'bold'}},
+            grid:{color:"#6366f155"},
+            beginAtZero:true,
+            min: Math.min(0, ...dataCumul)
           },
-          interaction: { mode: 'nearest', intersect: true },
-          animation: {duration:900, easing:'easeOutQuint'}
+          x: {
+            ticks: {color:'#fff',font:{weight:'bold'}},
+            grid:{color:"#6366f122"}
+          }
         }
-      });
-      // Gestion disparition hoverPoint au leave du canvas
-      chartRef.current.onmouseleave = () => {
-        setHoverPoint(null);
-        onMouseLeave && onMouseLeave();
       }
-    }
-    return ()=>{ if(window.myChart) window.myChart.destroy(); }
-  },[transactions]);
+    });
+  }, [showChart,transactions]);
+  
   return (
-    <div className="relative" style={{minHeight:220}}>
-      <canvas ref={chartRef} height={110}></canvas>
-      {hoverPoint && (
-        <div
-          className="absolute z-20 pointer-events-none"
-          style={{
-            left: `calc(${(hoverPoint.index/(labels.length-1||1))*100}% - 48px)`,
-            top: 15,
-            minWidth: '88px'
-          }}>
-          <div className="rounded-2xl bg-[#1a0033] border border-[#6366f1] shadow-lg px-4 py-2 text-white text-center text-base font-bold transition" style={{filter:'drop-shadow(0 2px 12px #6366f1bb)'}}>
-            {formatAmount(hoverPoint.value)}
-            <div className="text-xs text-white/70">{hoverPoint.label}</div>
-          </div>
-        </div>
-      )}
-      {
-        (!transactions || transactions.length===0) &&
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/40 text-xl font-bold pointer-events-none select-none" style={{letterSpacing:1}}>
-          <Lucide icon="moon" size={48} color="#6366f1" />
-          <span className="mt-3">Aucune donnée</span>
+    <div className="w-full px-3 pt-4 pb-1">
+      <div className="flex flex-wrap gap-3 mb-4">
+        <Badge label={"Solde "+formatAmount(solde)} icon="wallet" color="#10b981" />
+        <Badge label={"Épargné "+formatAmount(epargne)} icon="piggy-bank" color="#10b981"/>
+        <Badge label={"Revenus "+formatAmount(totalRevenus)} icon="plus-circle" color="#38bdf8"/>
+        <Badge label={"Dépensé "+formatAmount(sum(transactions.filter(t=>t.type==="expense"), t=>t.amount))} icon="shopping-bag" color="#ff006e"/>
+      </div>
+      {showChart &&
+        <div className="glass p-3 mt-1" style={{maxWidth:700, margin:'auto'}}>
+          <canvas ref={chartRef} height={100}></canvas>
         </div>
       }
     </div>
   );
 }
 
-// ----------- DASHBOARD (avec micro vocal) -----------
-function Dashboard({transactions, onAddTx, onExport, onImport, onVoiceAdd, micState, micError, listening}) {
-  // --- Affichage graphique ON/OFF avec persistence locale
-  const [showChart, setShowChart] = React.useState(true);
-  React.useEffect(()=>{
-    const s = localStorage.getItem('onyx_budget_show_chart');
-    if(s!==null) setShowChart(s==="true");
-  },[]);
-  React.useEffect(()=>{
-    localStorage.setItem('onyx_budget_show_chart', showChart);
-  },[showChart]);
-  return (
-    <div>
-      <MetricsCards transactions={transactions} />
-      <div className="flex items-center justify-end px-2 mt-2 mb-2 gap-3">
-        <button
-          className={"font-semibold rounded-xl px-4 py-2 transition shadow " +
-            (showChart ? "bg-[#ef4444]/80 hover:bg-[#ef4444]/90 text-white" : "bg-[#10b981]/80 hover:bg-[#10b981]/90 text-white")}
-          onClick={()=>setShowChart(v=>!v)}
-        >
-          {showChart ? (
-            <><Lucide icon="eye-off" className="inline mr-1" size={18}/> Cacher le graphique</>
-          ) : (
-            <><Lucide icon="eye" className="inline mr-1" size={18}/> Afficher le graphique</>
-          )}
-        </button>
-        <button
-          className={"font-bold rounded-xl px-4 py-2 transition shadow flex items-center gap-2 " +
-            (listening ? "mic-glow bg-[#00d9ff] text-white" : "bg-[#18181b] text-[#00d9ff] hover:bg-[#22223b]")}
-          onClick={onVoiceAdd}
-          disabled={listening}
-          title="Ajouter une dépense à la voix"
-        >
-          <Lucide icon="mic" size={20}/>
-          {listening ? "Enregistrement..." : "Micro"}
-        </button>
-      </div>
-      {micError && (
-        <div className="text-[#ef4444] font-bold text-center mb-2">{micError}</div>
-      )}
-      {showChart && (
-        <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
-          <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
-            <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
-            <PremiumChart transactions={transactions}/>
-          </div>
-        </div>
-      )}
-      <div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}>
-        <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
-          <Lucide icon="plus-circle"/> Ajouter transaction
-        </button>
-        <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover" onClick={onExport}>
-          <Lucide icon="download" /> Exporter JSON
-        </button>
-        <label className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover cursor-pointer flex items-center gap-2">
-          <Lucide icon="upload" /> Importer JSON
-          <input type="file" accept=".json" className="hidden" onChange={onImport}/>
-        </label>
-      </div>
-    </div>
-  );
-}
-
-// ----------- RESTE INCHANGÉ -----------
-// (CategorySelect, CategoryFilter, TransactionList, AddOrEditModal, SettingsModal, useLocalTransactions...)
-
-function CategorySelect({cat, setCat, categories}) {
-  const [showCatMenu, setShowCatMenu] = React.useState(false);
-  const ref = React.useRef();
-  React.useEffect(()=>{
-    function handler(e) {
-      if (!ref.current?.contains(e.target)) setShowCatMenu(false);
-    }
-    if (showCatMenu) window.addEventListener("mousedown", handler);
-    return ()=>window.removeEventListener("mousedown", handler);
-  }, [showCatMenu]);
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10"
-        onClick={()=>setShowCatMenu(x=>!x)}
-        tabIndex={-1}
-      >
-        <span className="flex items-center gap-2">
-          <Lucide icon={categories.find(c=>c.name===cat)?.icon || "circle"} color={categories.find(c=>c.name===cat)?.color || "#fff"} size={20}/>
-          {cat}
-        </span>
-        <Lucide icon="chevron-down" size={18}/>
-      </button>
-      {showCatMenu && (
-        <div className="absolute z-50 w-full bg-black rounded-xl mt-1 border border-white/10 max-h-60 overflow-y-auto menu-categories">
-          {categories.map(c=>(
-            <button type="button"
-              key={c.name}
-              className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
-              onClick={()=>{
-                setCat(c.name);
-                setShowCatMenu(false);
-              }}
-            >
-              <Lucide icon={c.icon} color={c.color} size={20}/>
-              <span className="text-white">{c.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-function CategoryFilter({cat, setCat, transactions}) {
-  const [showCatMenu, setShowCatMenu] = React.useState(false);
-  const ref = React.useRef();
-  React.useEffect(()=>{
-    function handler(e) {
-      if (!ref.current?.contains(e.target)) setShowCatMenu(false);
-    }
-    if (showCatMenu) window.addEventListener("mousedown", handler);
-    return ()=>window.removeEventListener("mousedown", handler);
-  }, [showCatMenu]);
-  const uniqueCats = Array.from(new Set(transactions.map(t=>t.category.name)));
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
-        onClick={()=>setShowCatMenu(x=>!x)}
-      >
-        {cat==="all"
-          ? <><Lucide icon="list" size={18}/> Toutes catégories</>
-          : <>
-              <Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon || "circle"} color={transactions.find(t=>t.category.name===cat)?.category.color || "#fff"} size={18}/>
-              {cat}
-            </>
-        }
-        <Lucide icon="chevron-down" size={16}/>
-      </button>
-      {showCatMenu && (
-        <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[190px] max-h-60 overflow-y-auto menu-categories">
-          <button type="button"
-            className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
-            onClick={()=>{
-              setCat("all");
-              setShowCatMenu(false);
-            }}
-          ><Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span></button>
-          {uniqueCats.map(c=>{
-            const catObj = transactions.find(t=>t.category.name===c)?.category;
-            return (
-              <button type="button"
-                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
-                key={c}
-                onClick={()=>{
-                  setCat(c);
-                  setShowCatMenu(false);
-                }}
-              >
-                <Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/>
-                <span className="text-white">{c}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+// --------------- TRANSACTION LIST ---------------
 function TransactionList({transactions, onEdit, onDelete}) {
-  const [query, setQuery] = React.useState("");
-  const [cat, setCat] = React.useState("all");
-  const filtered = transactions.filter(tx=>{
-    const q = query.toLowerCase();
-    const matchesQ = !q || tx.title.toLowerCase().includes(q) || (tx.tags||[]).some(tag=>tag.includes(q));
-    const matchesCat = cat==="all"||tx.category.name===cat;
-    return matchesQ && matchesCat;
-  });
+  if (!transactions.length) return (
+    <div className="glass px-8 py-12 my-12 text-center text-gray-300">
+      <Lucide icon="file-search" className="mx-auto mb-2" size={36}/>
+      <div>Aucune dépense ou revenu pour l’instant.<br/><span className="text-gray-500">Ajoutez vos premiers mouvements !</span></div>
+    </div>
+  );
   return (
-    <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto" style={{minWidth:'680px'}}>
-      <div className="flex flex-row items-center gap-6 mb-4 flex-wrap">
-        <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-[#6366f1] neon-hover" />
-        <CategoryFilter cat={cat} setCat={setCat} transactions={transactions} />
-      </div>
-      <div className="overflow-x-auto" style={{minWidth: '680px'}}>
-        <table className="min-w-full text-white/90 text-sm">
+    <div className="w-full px-3">
+      <div className="glass px-2 py-2 mb-4" style={{overflowX:'auto'}}>
+        <table className="w-full min-w-[520px]">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left py-2">Titre</th>
-              <th className="text-left py-2">Catégorie</th>
-              <th className="text-left py-2">Montant</th>
-              <th className="text-left py-2">Date</th>
-              <th className="text-left py-2">Type</th>
-              <th className="text-left py-2">Tags</th>
-              <th className="text-left py-2"></th>
+            <tr className="text-left text-gray-400 font-medium">
+              <th className="p-2">Catégorie</th>
+              <th className="p-2">Titre</th>
+              <th className="p-2">Date</th>
+              <th className="p-2">Montant</th>
+              <th className="p-2"></th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map(tx=>(
-              <tr key={tx.id} className="hover:bg-white/10 transition">
-                <td className="py-2">{tx.title}</td>
-                <td className="py-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg" style={{background:tx.category.color+"22"}}>
-                    <Lucide icon={tx.category.icon} color={tx.category.color} size={18}/>{tx.category.name}
+            {transactions.map((t,i)=>(
+              <tr key={t.id} className={"hover:bg-[#ffffff09] transition "+(t.type==="income"?"text-green-400":"text-white")}>
+                <td className="p-2">
+                  <span className="inline-flex items-center gap-1">
+                    <Lucide icon={t.category.icon} color={t.category.color} size={20}/>
+                    <span style={{color:t.category.color}}>{t.category.name}</span>
                   </span>
                 </td>
-                <td className="py-2 font-bold" style={{color:tx.type==="income"?"#10b981":"#ef4444"}}>
-                  {tx.type==="expense"? "-": "+"}{formatAmount(tx.amount)}
-                </td>
-                <td className="py-2">{formatDate(tx.date)}</td>
-                <td className="py-2">{tx.type==="income"?<span className="font-bold text-[#10b981]">Entrée</span>:<span className="font-bold text-[#ef4444]">Sortie</span>}</td>
-                <td className="py-2">{(tx.tags||[]).map(tag=><span key={tag} className="px-2 py-0.5 mx-1 bg-white/10 rounded-full">{tag}</span>)}</td>
-                <td className="py-2 flex gap-2">
-                  <button onClick={()=>onEdit(tx)} title="Éditer" className="hover:text-[#6366f1]"><Lucide icon="edit" /></button>
-                  <button onClick={()=>onDelete(tx.id)} title="Supprimer" className="hover:text-[#ef4444]"><Lucide icon="trash-2" /></button>
+                <td className="p-2">{t.title}</td>
+                <td className="p-2">{formatDate(t.date)}</td>
+                <td className="p-2 font-semibold">{(t.type==="income"?"+":"-")+formatAmount(t.amount)}</td>
+                <td className="p-2">
+                  <button onClick={()=>onEdit(t)} className="text-blue-400 hover:scale-110">
+                    <Lucide icon="edit" size={18}/>
+                  </button>
+                  <button onClick={()=>onDelete(t)} className="ml-2 text-rose-400 hover:scale-110">
+                    <Lucide icon="trash" size={18}/>
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {!filtered.length && <div className="text-white/60 text-center my-6">Aucune transaction ne correspond.</div>}
       </div>
     </div>
   );
 }
-function AddOrEditModal({show, onClose, onSave, tx}) {
-  const isEdit = !!tx;
-  const [title, setTitle] = React.useState(tx?.title||"");
-  const [amount, setAmount] = React.useState(tx?.amount||"");
-  const [type, setType] = React.useState(tx?.type||"expense");
-  const [cat, setCat] = React.useState(tx?.category?.name||CATEGORIES[0].name);
-  const [date, setDate] = React.useState(tx?.date ? new Date(tx.date).toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
-  const [tags, setTags] = React.useState((tx?.tags||[]).join(', '));
+
+// --------------- AJOUT/EDITION MODAL ---------------
+function AddEditModal({open, onClose, onSave, editTx, onVoice}) {
+  const [title, setTitle] = React.useState(editTx?editTx.title:"");
+  const [amount, setAmount] = React.useState(editTx?editTx.amount:"");
+  const [date, setDate] = React.useState(editTx?new Date(editTx.date).toISOString().slice(0,10):new Date().toISOString().slice(0,10));
+  const [category, setCategory] = React.useState(editTx?editTx.category:CATEGORIES[1]);
+  const [type, setType] = React.useState(editTx?editTx.type:"expense");
+  const inputRef = React.useRef();
+
   React.useEffect(()=>{
-    if(tx){
-      setTitle(tx.title);
-      setAmount(tx.amount);
-      setType(tx.type);
-      setCat(tx.category.name);
-      setDate(new Date(tx.date).toISOString().slice(0,10));
-      setTags((tx.tags||[]).join(', '));
-    } else {
-      setTitle(""); setAmount(""); setType("expense"); setCat(CATEGORIES[0].name); setDate(new Date().toISOString().slice(0,10)); setTags("");
+    if(open) {
+      setTitle(editTx?editTx.title:"");
+      setAmount(editTx?editTx.amount:"");
+      setDate(editTx?new Date(editTx.date).toISOString().slice(0,10):new Date().toISOString().slice(0,10));
+      setCategory(editTx?editTx.category:CATEGORIES[1]);
+      setType(editTx?editTx.type:"expense");
+      setTimeout(()=>{if(inputRef.current)inputRef.current.focus()},300);
     }
-  }, [tx, show]);
-  function submit(e) {
+  },[open,editTx]);
+
+  function handleSave(e) {
     e.preventDefault();
-    if(!title||!amount||isNaN(+amount)) return;
-    const selectedCat = CATEGORIES.find(
-      c => normalizeString(c.name) === normalizeString(cat)
-    );
-    if (!selectedCat) {
-      alert("Catégorie invalide !");
-      return;
-    }
+    if(!title || !amount || !category) return;
     onSave({
-      id: tx?.id || randomId(),
+      id: editTx?editTx.id:randomId(),
       title,
       amount: Number(amount),
       date: new Date(date),
-      category: selectedCat,
+      category,
       type,
-      tags: tags.split(",").map(s=>s.trim()).filter(Boolean)
+      tags: []
     });
-    onClose();
   }
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
-      <div className="glass max-w-lg w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-2">{isEdit ? "Modifier" : "Ajouter"} une transaction</h2>
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="block text-white/70">Titre</label>
-            <input required type="text" value={title} onChange={e=>setTitle(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="block text-white/70">Montant</label>
-              <input required type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-white/70">Type</label>
-              <select value={type} onChange={e=>setType(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none">
-                <option value="expense">Sortie</option>
-                <option value="income">Entrée</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-white/70">Catégorie</label>
-            <CategorySelect cat={cat} setCat={setCat} categories={CATEGORIES}/>
-          </div>
-          <div>
-            <label className="block text-white/70">Date</label>
-            <input required type="date" value={date} onChange={e=>setDate(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <div>
-            <label className="block text-white/70">Tags (séparés par ,)</label>
-            <input type="text" value={tags} onChange={e=>setTags(e.target.value)} placeholder="courses,loisir..." className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <button type="submit" className="w-full py-2 font-bold rounded-xl neon-hover text-white bg-[#00d9ff] mt-3 transition">
-            {isEdit ? "Enregistrer" : "Ajouter"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-function SettingsModal({show, onClose}) {
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
-      <div className="glass max-w-sm w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-2">Paramètres utilisateur</h2>
-        <button className="mt-4 py-2 font-bold rounded-xl neon-hover text-white bg-[#6366f1] transition" onClick={onClose}>
-          Fermer
-        </button>
-      </div>
-    </div>
-  );
-}
-function useLocalTransactions() {
-  const [transactions, setTransactions] = React.useState([]);
-  React.useEffect(()=>{
-    try {
-      const data = localStorage.getItem("onyx_budget_v2");
-      if(data){
-        const arr = JSON.parse(data);
-        setTransactions(sortTransactions(Array.isArray(arr)?arr:[]));
-      }
-    } catch {}
-  },[]);
-  React.useEffect(()=>{
-    localStorage.setItem("onyx_budget_v2", JSON.stringify(transactions));
-  },[transactions]);
-  function setAndSort(arr) {
-    setTransactions(sortTransactions(arr));
-  }
-  return [transactions, setAndSort];
-}
 
-// ------------- APP PRINCIPAL --------------
-function App() {
-  const [transactions, setTransactions] = useLocalTransactions();
-  const [showModal, setShowModal] = React.useState(false);
-  const [editTx, setEditTx] = React.useState(null);
-  const [showSettings, setShowSettings] = React.useState(false);
-  // Micro-interactions
-  const [showCheck, setShowCheck] = React.useState(false);
-  const [showBadge, setShowBadge] = React.useState(false);
-  const [badgeType, setBadgeType] = React.useState(null);
-
-  // ----------- Saisie vocale -----------
-  const [micError, setMicError] = React.useState("");
-  const [lastVoice, setLastVoice] = React.useState("");
-  const {listening, start: startMic, error: errMic} = useSpeechRecognition({
-    onResult: (res) => {
-      setLastVoice(res);
-      let parsed = parseVoiceExpense(res);
+  function handleVoiceDictation() {
+    if (onVoice) onVoice((parsed) => {
       if (parsed) {
-        handleAddOrEdit(parsed);
-        setMicError("");
-        setTimeout(()=>{setShowCheck(true)},150);
+        setTitle(parsed.title || "");
+        setAmount(parsed.amount || "");
+        setDate(parsed.date ? new Date(parsed.date).toISOString().slice(0,10) : date);
+        setCategory(parsed.category || category);
+        setType(parsed.type || "expense");
+      }
+    });
+  }
+
+  if(!open) return null;
+  return (
+    <div className="fixed inset-0 bg-[#1a0033cc] bg-opacity-80 z-30 flex items-center justify-center transition">
+      <form onSubmit={handleSave} className="glass p-7 min-w-[320px] max-w-md w-full relative">
+        <button type="button" onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white z-10"><Lucide icon="x" size={24}/></button>
+        <div className="text-2xl font-bold mb-4">{editTx?"Modifier":"Ajouter"} une transaction</div>
+        <label className="block mb-2 text-sm text-white/80">Titre</label>
+        <input ref={inputRef} className="w-full mb-4 px-3 py-2 rounded-lg glass text-white bg-[#19181d99] border-0 outline-none" value={title} onChange={e=>setTitle(e.target.value)}/>
+        <label className="block mb-2 text-sm text-white/80">Montant</label>
+        <input className="w-full mb-4 px-3 py-2 rounded-lg glass text-white bg-[#19181d99] border-0 outline-none" type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)}/>
+        <label className="block mb-2 text-sm text-white/80">Catégorie</label>
+        <select className="w-full mb-4 px-3 py-2 rounded-lg glass bg-[#19181d99] text-white" value={CATEGORIES.findIndex(c=>c.name===category.name)} onChange={e=>setCategory(CATEGORIES[e.target.value])}>
+          {CATEGORIES.map((c,i)=>(
+            <option key={c.name} value={i}>{c.name}</option>
+          ))}
+        </select>
+        <label className="block mb-2 text-sm text-white/80">Date</label>
+        <input className="w-full mb-4 px-3 py-2 rounded-lg glass text-white bg-[#19181d99] border-0 outline-none" type="date" value={date} onChange={e=>setDate(e.target.value)}/>
+        <div className="flex gap-2 mb-5">
+          <button type="button" onClick={handleVoiceDictation} className="rounded-full p-2 glass mic-glow hover:scale-110" title="Saisie vocale">
+            <Lucide icon="mic" size={20}/>
+          </button>
+        </div>
+        <button type="submit" className="w-full py-3 rounded-xl glass bg-[#10b981] hover:bg-[#00d9ff] text-white font-bold text-lg">{editTx?"Enregistrer":"Ajouter"}</button>
+      </form>
+    </div>
+  );
+}
+
+// --------------- APP PRINCIPALE ---------------
+function App() {
+  const [transactions, setTransactions] = React.useState(()=> {
+    try {
+      return JSON.parse(localStorage.getItem("onyx-budget-v2")||"[]").map(t=>({...t,date:new Date(t.date)}));
+    } catch(e){ return [] }
+  });
+  const [modal, setModal] = React.useState(false);
+  const [editTx, setEditTx] = React.useState(null);
+  const [showChart, setShowChart] = React.useState(()=>localStorage.getItem("onyx-budget-v2-showChart")!=="false");
+  const [voiceError, setVoiceError] = React.useState("");
+  const {listening, start:micStart, stop:micStop} = useSpeechRecognition({
+    onResult: (txt) => {
+      const parsed = parseVoiceExpense(txt);
+      if(parsed) {
+        setModal(true);
+        setEditTx(null);
+        setTimeout(()=>{
+          setEditTx({...parsed,date:new Date(parsed.date)});
+        },50);
+        fireConfetti();
       } else {
-        setMicError("Désolé, je n'ai pas compris. Réessaie !");
+        setVoiceError("Je n'ai pas compris la dépense.");
       }
     }
   });
-
+  // Sauvegarde locale
   React.useEffect(()=>{
-    if(showCheck){
-      setTimeout(()=>setShowCheck(false), 1100);
-    }
-  }, [showCheck]);
-  function handleAddOrEdit(tx) {
-    let arr = [];
-    if (transactions && Array.isArray(transactions)) {
-      const i = transactions.findIndex(t=>t.id===tx.id);
-      if(i>=0) {
-        arr = [...transactions];
-        arr[i] = tx;
-      } else {
-        arr = [...transactions, tx];
-      }
-    } else {
-      arr = [tx];
-    }
-    setTransactions(arr);
-
-    // MICRO-ANIMS 🎉
-    setShowCheck(true);
-    window.confetti && window.confetti({particleCount: 100, spread: 90, origin:{ y: 0.2 }, startVelocity:32, colors:['#6366f1','#00d9ff','#ff006e','#10b981']});
-    if(
-      (!transactions.some(t=>t.type==="income") && tx.type==="income")
-    ) {
-      setTimeout(()=>{setBadgeType("first_income");setShowBadge(true);}, 800);
-      setTimeout(()=>setShowBadge(false), 3300);
-    }
-    if(
-      (!transactions.some(t=>normalizeString(t.category.name)==="épargne") && normalizeString(tx.category.name)==="épargne")
-    ) {
-      setTimeout(()=>{setBadgeType("first_saving");setShowBadge(true);}, 800);
-      setTimeout(()=>setShowBadge(false), 3300);
+    localStorage.setItem("onyx-budget-v2", JSON.stringify(transactions));
+  },[transactions]);
+  React.useEffect(()=>{
+    localStorage.setItem("onyx-budget-v2-showChart", showChart?"true":"false");
+  },[showChart]);
+  // Calculs
+  const solde = sum(transactions.filter(t=>t.type==="income"), t=>t.amount) - sum(transactions.filter(t=>t.type==="expense"), t=>t.amount);
+  const epargne = sum(transactions.filter(t=>t.category.name==="Épargne"), t=>t.amount);
+  // Events
+  function handleAdd() { setEditTx(null); setModal(true);}
+  function handleEdit(tx) { setEditTx(tx); setModal(true);}
+  function handleDelete(tx) {
+    if(window.confirm("Supprimer cette transaction ?")) {
+      setTransactions(transactions.filter(t=>t.id!==tx.id));
     }
   }
-  function handleDelete(id) { setTransactions(transactions.filter(t=>t.id!==id)); }
+  function handleSave(tx) {
+    setModal(false);
+    setTimeout(()=>{fireConfetti();},400);
+    setTransactions(tx0=>{
+      let exists = tx0.findIndex(t=>t.id===tx.id);
+      let arr = [...tx0];
+      if(exists>=0) arr[exists]=tx;
+      else arr.push(tx);
+      return sortTransactions(arr);
+    });
+  }
+  function handleImport() {
+    let input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json,application/json";
+    input.onchange = (e)=>{
+      let file = e.target.files[0];
+      if(!file) return;
+      let reader = new FileReader();
+      reader.onload = (evt)=>{
+        try {
+          let arr = JSON.parse(evt.target.result);
+          if(Array.isArray(arr)){
+            arr = arr.map(t=>({...t,date:new Date(t.date)}));
+            setTransactions(sortTransactions(arr));
+          }
+        } catch(e){}
+      };
+      reader.readAsText(file);
+    }
+    input.click();
+  }
   function handleExport() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions,null,2));
-    const link = document.createElement('a');
-    link.href = dataStr;
-    link.download = "transactions.json";
-    link.click();
+    let blob = new Blob([JSON.stringify(transactions,null,2)],{type:"application/json"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "onyx-budget-v2.json";
+    a.click();
   }
-  function handleImport(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = evt=>{
-      try {
-        const json = JSON.parse(evt.target.result);
-        if(Array.isArray(json)) setTransactions(json);
-        else alert("Fichier invalide !");
-      } catch {
-        alert("Erreur import JSON");
-      }
-    };
-    reader.readAsText(file);
+  function handleVoice(cb) {
+    setVoiceError("");
+    micStart();
+    setTimeout(()=>micStop(),12000); // sécurité
+    // callback via useSpeechRecognition
   }
+  // --- RENDER ---
   return (
-    <div className="relative z-10 px-2 md:px-12 py-2 md:py-8 max-w-5xl mx-auto min-w-[680px]">
-      <Header />
-      <Dashboard
-        transactions={transactions}
-        onAddTx={()=>{setEditTx(null); setShowModal(true);}}
-        onExport={handleExport}
+    <div className="max-w-5xl mx-auto pb-16">
+      <Header
+        onAdd={handleAdd}
         onImport={handleImport}
-        onVoiceAdd={startMic}
-        micError={micError || errMic}
-        listening={listening}
+        onExport={handleExport}
+        showChart={showChart}
+        toggleChart={()=>setShowChart(sc=>!sc)}
       />
-      <TransactionList
-        transactions={transactions}
-        onEdit={tx=>{setEditTx(tx); setShowModal(true);}}
-        onDelete={handleDelete}
+      <Dashboard transactions={transactions} showChart={showChart} solde={solde} epargne={epargne} />
+      <div className="px-4 pt-6">
+        <TransactionList transactions={transactions} onEdit={handleEdit} onDelete={handleDelete}/>
+      </div>
+      <AddEditModal
+        open={modal}
+        onClose={()=>setModal(false)}
+        onSave={handleSave}
+        editTx={editTx}
+        onVoice={handleVoice}
       />
-      <AddOrEditModal
-        show={showModal}
-        onClose={()=>setShowModal(false)}
-        onSave={handleAddOrEdit}
-        tx={editTx}
-      />
-      <SettingsModal show={showSettings} onClose={()=>setShowSettings(false)}/>
-      <SuccessCheckmark show={showCheck} />
-      <BadgeAchievement show={showBadge} type={badgeType}/>
+      {listening &&
+        <div className="fixed inset-0 bg-[#1a0033bb] z-50 flex flex-col items-center justify-center">
+          <div className="p-8 glass text-center">
+            <div className="mic-glow mb-4 inline-block rounded-full p-5"><Lucide icon="mic" size={36}/></div>
+            <div className="text-xl font-semibold text-white mb-2">Parlez…</div>
+            <div className="text-sm text-gray-400">Dites : “Courses 12 euros 50 centimes hier”</div>
+            <button className="mt-6 px-4 py-2 rounded-xl bg-[#00d9ff] text-white font-semibold" onClick={micStop}>Arrêter</button>
+          </div>
+        </div>
+      }
+      {voiceError && <div className="fixed bottom-5 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl bg-rose-700 text-white text-lg">{voiceError}</div>}
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+// --- MOUNT REACT ---
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
   </script>
 </body>
 </html>
