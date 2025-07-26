@@ -68,6 +68,12 @@
     @media (max-width: 680px) {
       html, body { font-size: 15px; }
     }
+    /* Empêche le menu custom de dépasser l'écran */
+    .menu-categories {
+      max-height: 240px;
+      overflow-y: auto;
+      z-index: 99;
+    }
   </style>
 </head>
 <body>
@@ -355,6 +361,112 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
   );
 }
 
+// -- CATEGORIES MENU AVEC ICONES (AJOUT / EDIT) --
+function CategorySelect({cat, setCat, categories}) {
+  const [showCatMenu, setShowCatMenu] = React.useState(false);
+  const ref = React.useRef();
+  React.useEffect(()=>{
+    function handler(e) {
+      if (!ref.current?.contains(e.target)) setShowCatMenu(false);
+    }
+    if (showCatMenu) window.addEventListener("mousedown", handler);
+    return ()=>window.removeEventListener("mousedown", handler);
+  }, [showCatMenu]);
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10"
+        onClick={()=>setShowCatMenu(x=>!x)}
+        tabIndex={-1}
+      >
+        <span className="flex items-center gap-2">
+          <Lucide icon={categories.find(c=>c.name===cat)?.icon || "circle"} color={categories.find(c=>c.name===cat)?.color || "#fff"} size={20}/>
+          {cat}
+        </span>
+        <Lucide icon="chevron-down" size={18}/>
+      </button>
+      {showCatMenu && (
+        <div className="absolute z-50 w-full bg-black rounded-xl mt-1 border border-white/10 max-h-60 overflow-y-auto menu-categories">
+          {categories.map(c=>(
+            <button type="button"
+              key={c.name}
+              className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left"
+              onClick={()=>{
+                setCat(c.name);
+                setShowCatMenu(false);
+              }}
+            >
+              <Lucide icon={c.icon} color={c.color} size={20}/>
+              {c.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -- FILTRE "TOUTES CATEGORIES" AVEC ICONES --
+function CategoryFilter({cat, setCat, transactions}) {
+  const [showCatMenu, setShowCatMenu] = React.useState(false);
+  const ref = React.useRef();
+  React.useEffect(()=>{
+    function handler(e) {
+      if (!ref.current?.contains(e.target)) setShowCatMenu(false);
+    }
+    if (showCatMenu) window.addEventListener("mousedown", handler);
+    return ()=>window.removeEventListener("mousedown", handler);
+  }, [showCatMenu]);
+  const uniqueCats = Array.from(new Set(transactions.map(t=>t.category.name)));
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
+        onClick={()=>setShowCatMenu(x=>!x)}
+      >
+        {cat==="all"
+          ? <><Lucide icon="list" size={18}/> Toutes catégories</>
+          : <>
+              <Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon || "circle"} color={transactions.find(t=>t.category.name===cat)?.category.color || "#fff"} size={18}/>
+              {cat}
+            </>
+        }
+        <Lucide icon="chevron-down" size={16}/>
+      </button>
+      {showCatMenu && (
+        <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[190px] max-h-60 overflow-y-auto menu-categories">
+          <button type="button"
+            className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left"
+            onClick={()=>{
+              setCat("all");
+              setShowCatMenu(false);
+            }}
+          ><Lucide icon="list" size={18}/> Toutes catégories</button>
+          {uniqueCats.map(c=>{
+            const catObj = transactions.find(t=>t.category.name===c)?.category;
+            return (
+              <button type="button"
+                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left"
+                key={c}
+                onClick={()=>{
+                  setCat(c);
+                  setShowCatMenu(false);
+                }}
+              >
+                <Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/>
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---- LISTE DES TRANSACTIONS ----
 function TransactionList({transactions, onEdit, onDelete}) {
   const [query, setQuery] = React.useState("");
   const [cat, setCat] = React.useState("all");
@@ -368,12 +480,7 @@ function TransactionList({transactions, onEdit, onDelete}) {
     <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto" style={{minWidth:'680px'}}>
       <div className="flex flex-row items-center gap-6 mb-4 flex-wrap">
         <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-[#6366f1] neon-hover" />
-        <select value={cat} onChange={e=>setCat(e.target.value)} className="bg-black text-white px-3 py-2 rounded-xl outline-none neon-hover">
-          <option value="all">Toutes catégories</option>
-          {[...new Set(transactions.map(t=>t.category.name))].map(c=>(
-            <option value={c} key={c}>{c}</option>
-          ))}
-        </select>
+        <CategoryFilter cat={cat} setCat={setCat} transactions={transactions} />
       </div>
       <div className="overflow-x-auto" style={{minWidth: '680px'}}>
         <table className="min-w-full text-white/90 text-sm">
@@ -417,6 +524,7 @@ function TransactionList({transactions, onEdit, onDelete}) {
   );
 }
 
+// ---- MODAL AJOUT / EDIT ----
 function AddOrEditModal({show, onClose, onSave, tx}) {
   const isEdit = !!tx;
   const [title, setTitle] = React.useState(tx?.title||"");
@@ -484,9 +592,7 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
           </div>
           <div>
             <label className="block text-white/70">Catégorie</label>
-            <select value={cat} onChange={e=>setCat(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none">
-              {CATEGORIES.map(c=><option value={c.name} key={c.name}>{c.name}</option>)}
-            </select>
+            <CategorySelect cat={cat} setCat={setCat} categories={CATEGORIES}/>
           </div>
           <div>
             <label className="block text-white/70">Date</label>
