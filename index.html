@@ -68,7 +68,6 @@
     @media (max-width: 680px) {
       html, body { font-size: 15px; }
     }
-    /* Correction : le texte du menu cat est toujours blanc */
     .menu-categories button, .menu-categories span, .menu-categories { color: #fff !important; }
   </style>
 </head>
@@ -155,7 +154,7 @@ function Header() {
         <img
           src="https://i.ibb.co/5WMnx7y6/8ba349756916.png"
           alt="Onyx Budget"
-          className="h-[180px] w-[180px]"
+          className="h-[99px] w-[99px]"
           style={{objectFit:"contain", background:"none", border:"none", boxShadow:"none"}}
         />
         <span className="onyx-title">
@@ -249,6 +248,11 @@ function getDailyBalances(transactions) {
 
 function Dashboard({transactions, onAddTx, onExport, onImport}) {
   const chartRef = React.useRef();
+  // --- Extraction du solde du 1er point
+  const {labels, data} = getDailyBalances(transactions);
+  const firstDayLabel = labels[0];
+  const firstDayValue = data[0];
+
   React.useEffect(()=>{
     if(chartRef.current){
       const ctx = chartRef.current.getContext("2d");
@@ -261,8 +265,6 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
       gradientLine.addColorStop(0,"#00d9ff");
       gradientLine.addColorStop(0.5,"#6366f1");
       gradientLine.addColorStop(1,"#ff006e");
-
-      const {labels, data} = getDailyBalances(transactions);
 
       window.myChart = new window.Chart(ctx, {
         type:"line",
@@ -329,7 +331,19 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
       <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
         <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
           <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
-          <div style={{minHeight:220, position:"relative"}}>
+          <div className="relative" style={{minHeight:220}}>
+            {/* Montant affiché à gauche */}
+            {labels.length > 0 && (
+              <div
+                className="absolute left-0 top-0 z-10 flex flex-col items-start"
+                style={{padding: "20px 0 0 24px"}}
+              >
+                <span className="font-bold text-2xl text-[#00d9ff] drop-shadow-[0_2px_6px_rgba(0,217,255,.10)]">
+                  {formatAmount(firstDayValue)}
+                </span>
+                <span className="text-xs text-white/60 mt-1">{firstDayLabel}</span>
+              </div>
+            )}
             <canvas ref={chartRef} height={110}></canvas>
             {
               (!transactions || transactions.length===0) &&
@@ -357,7 +371,6 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
   );
 }
 
-// -- CATEGORIES MENU AVEC ICONES (AJOUT / EDIT) --
 function CategorySelect({cat, setCat, categories}) {
   const [showCatMenu, setShowCatMenu] = React.useState(false);
   const ref = React.useRef();
@@ -403,7 +416,6 @@ function CategorySelect({cat, setCat, categories}) {
   );
 }
 
-// -- FILTRE "TOUTES CATEGORIES" AVEC ICONES --
 function CategoryFilter({cat, setCat, transactions}) {
   const [showCatMenu, setShowCatMenu] = React.useState(false);
   const ref = React.useRef();
@@ -462,7 +474,6 @@ function CategoryFilter({cat, setCat, transactions}) {
   );
 }
 
-// ---- LISTE DES TRANSACTIONS ----
 function TransactionList({transactions, onEdit, onDelete}) {
   const [query, setQuery] = React.useState("");
   const [cat, setCat] = React.useState("all");
@@ -520,7 +531,6 @@ function TransactionList({transactions, onEdit, onDelete}) {
   );
 }
 
-// ---- MODAL AJOUT / EDIT ----
 function AddOrEditModal({show, onClose, onSave, tx}) {
   const isEdit = !!tx;
   const [title, setTitle] = React.useState(tx?.title||"");
