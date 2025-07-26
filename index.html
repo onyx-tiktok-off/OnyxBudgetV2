@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Onyx Budget V2</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -15,7 +15,8 @@
       min-height: 100vh;
       font-family: 'Inter', 'Montserrat', Arial, sans-serif;
       background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 100%);
-      overflow-x: hidden;
+      overflow-x: auto;
+      font-size: 16px;
     }
     .glass {
       background: rgba(255,255,255,0.05);
@@ -63,6 +64,9 @@
     }
     @media (max-width:600px) {
       .onyx-title { font-size: 1.3rem;}
+    }
+    @media (max-width: 680px) {
+      html, body { font-size: 15px; }
     }
   </style>
 </head>
@@ -135,7 +139,6 @@ function normalizeString(str) {
     .trim();
 }
 
-// --- NOUVEAU TRI DEMANDÉ ---
 function sortTransactions(arr) {
   if (!Array.isArray(arr)) return [];
   const income = arr.filter(t => t.type === "income").sort((a,b)=>b.amount - a.amount);
@@ -172,7 +175,7 @@ function MetricsCards({transactions}) {
   );
   const balance = totalIncome-totalExpense;
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
+    <div className="grid grid-cols-4 gap-4 my-4 overflow-x-auto min-w-[680px]">
       <div className="glass p-4 md:p-6 shadow-xl">
         <div className="flex items-center gap-2">
           <Lucide icon="credit-card" color="#6366f1"/>
@@ -321,8 +324,8 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
   return (
     <div>
       <MetricsCards transactions={transactions} />
-      <div className="glass my-6 p-0 md:p-0 overflow-x-auto">
-        <div className="p-4">
+      <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
+        <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
           <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
           <div style={{minHeight:220, position:"relative"}}>
             <canvas ref={chartRef} height={110}></canvas>
@@ -336,7 +339,7 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
           </div>
         </div>
       </div>
-      <div className="flex flex-col md:flex-row gap-3 justify-end">
+      <div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}>
         <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
           <Lucide icon="plus-circle"/> Ajouter transaction
         </button>
@@ -362,8 +365,8 @@ function TransactionList({transactions, onEdit, onDelete}) {
     return matchesQ && matchesCat;
   });
   return (
-    <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto">
-      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 mb-4">
+    <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto" style={{minWidth:'680px'}}>
+      <div className="flex flex-row items-center gap-6 mb-4 flex-wrap">
         <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-[#6366f1] neon-hover" />
         <select value={cat} onChange={e=>setCat(e.target.value)} className="bg-black text-white px-3 py-2 rounded-xl outline-none neon-hover">
           <option value="all">Toutes catégories</option>
@@ -372,7 +375,7 @@ function TransactionList({transactions, onEdit, onDelete}) {
           ))}
         </select>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" style={{minWidth: '680px'}}>
         <table className="min-w-full text-white/90 text-sm">
           <thead>
             <tr className="border-b border-white/10">
@@ -585,7 +588,7 @@ function App() {
   }
 
   return (
-    <div className="relative z-10 px-2 md:px-12 py-2 md:py-8 max-w-5xl mx-auto">
+    <div className="relative z-10 px-2 md:px-12 py-2 md:py-8 max-w-5xl mx-auto min-w-[680px]">
       <Header />
       <Dashboard
         transactions={transactions}
