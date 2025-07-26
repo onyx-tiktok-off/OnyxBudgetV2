@@ -10,7 +10,6 @@
   <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Canvas-confetti for real confetti 🎉 -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
     html, body {
@@ -78,7 +77,6 @@
   <div id="root"></div>
   <script type="text/babel">
 
-// --- UTILITAIRES ---
 function Lucide(props) {
   React.useEffect(()=>{if(window.lucide) window.lucide.createIcons();},[props.icon]);
   return <i data-lucide={props.icon} className={props.className} style={{display:"inline-block",verticalAlign:"middle",color:props.color||"inherit"}}></i>
@@ -291,14 +289,79 @@ function PremiumChart({transactions}) {
       gradientLine.addColorStop(0.5,"#6366f1");
       gradientLine.addColorStop(1,"#ff006e");
       window.myChart = new window.Chart(ctx, {
-        // ... (le reste inchangé)
+        type:"line",
+        data:{
+          labels: labels.length ? labels : ["—"],
+          datasets: [{
+            label:"Solde",
+            data: data.length ? data : [0],
+            fill: true,
+            borderWidth: 3,
+            borderColor: gradientLine,
+            backgroundColor: gradient,
+            pointRadius: data.length>1 ? 5 : 12,
+            pointBackgroundColor: "#00d9ff",
+            pointBorderWidth: 2,
+            pointBorderColor: "#fff",
+            pointHoverRadius: 15,
+            tension: 0.44,
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{display:false},
+            tooltip: {
+              enabled: false,
+              external: function(context) {
+                const {chart, tooltip} = context;
+                if (!chart) return;
+                if(tooltip && tooltip.dataPoints && tooltip.dataPoints.length) {
+                  setHoverPoint({
+                    index: tooltip.dataPoints[0].dataIndex,
+                    value: tooltip.dataPoints[0].parsed.y,
+                    label: tooltip.dataPoints[0].label
+                  });
+                } else {
+                  setHoverPoint(null);
+                }
+              }
+            },
+          },
+          elements: {
+            line: { borderJoinStyle:"round", borderCapStyle:"round" }
+          },
+          scales:{
+            y:{
+              min: 0,
+              max: totalRevenus > 0 ? Math.ceil(totalRevenus/10)*10 : undefined,
+              ticks:{
+                color:"#fff",
+                font:{size:15, weight:700},
+                callback: function(value) { return formatAmount(value);}
+              },
+              grid:{color:"rgba(99,102,241,0.10)", lineWidth:1.2},
+              border:{color:"rgba(99,102,241,0.17)"},
+              beginAtZero:true,
+            },
+            x:{
+              ticks:{color:"#fff", font:{size:14}},
+              grid:{color:"rgba(99,102,241,0.07)",drawOnChartArea:false},
+              border:{color:"rgba(99,102,241,0.17)"},
+              autoSkip: false,
+              maxRotation: 0,
+              minRotation: 0
+            }
+          },
+          interaction: { mode: 'nearest', intersect: true },
+          animation: {duration:900, easing:'easeOutQuint'}
+        }
       });
     }
     return ()=>{ if(window.myChart) window.myChart.destroy(); }
   },[transactions]);
   return (
     <div className="relative" style={{minHeight:220}}>
-      {/* === Rien ici ! === */}
       <canvas ref={chartRef} height={110}></canvas>
       {hoverPoint && (
         <div
@@ -324,7 +387,6 @@ function PremiumChart({transactions}) {
     </div>
   );
 }
-
 
 function Dashboard({transactions, onAddTx, onExport, onImport}) {
   return (
@@ -352,8 +414,8 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
   );
 }
 
-// ---------- RESTE DU CODE (inchangé) ----------
-// CategorySelect, CategoryFilter, TransactionList, AddOrEditModal, SettingsModal, useLocalTransactions...
+// ---------- RESTE DU CODE ----------
+// (CategorySelect, CategoryFilter, TransactionList, AddOrEditModal, SettingsModal, useLocalTransactions...)
 
 function CategorySelect({cat, setCat, categories}) {
   const [showCatMenu, setShowCatMenu] = React.useState(false);
@@ -663,9 +725,7 @@ function App() {
 
     // MICRO-ANIMS 🎉
     setShowCheck(true);
-    // Confetti !
     window.confetti && window.confetti({particleCount: 100, spread: 90, origin:{ y: 0.2 }, startVelocity:32, colors:['#6366f1','#00d9ff','#ff006e','#10b981']});
-    // Badge achievement premier revenu / première épargne
     if(
       (!transactions.some(t=>t.type==="income") && tx.type==="income")
     ) {
