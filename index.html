@@ -52,7 +52,6 @@
     }
     @media (max-width:600px) {.onyx-title { font-size: 1.3rem;}}
     @media (max-width: 680px) {html, body { font-size: 15px; }}
-    .menu-categories button, .menu-categories span, .menu-categories { color: #fff !important; }
     .badge-anim-pop {
       animation: badgePop 0.72s cubic-bezier(.65,-0.3,.63,1.36);
     }
@@ -84,7 +83,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel">
-// --- UTILITAIRES & CONST
+
 function Lucide(props) {
   React.useEffect(()=>{if(window.lucide) window.lucide.createIcons();},[props.icon]);
   return <i data-lucide={props.icon} className={props.className} style={{display:"inline-block",verticalAlign:"middle",color:props.color||"inherit"}}></i>
@@ -212,7 +211,6 @@ function parseFrenchNumber(str) {
   }
   return total+cur;
 }
-
 function extractAmountFromText(txt) {
   let match = txt.match(/(\d+[., ]?\d*)\s*(euros?|centimes?|€)?/i);
   if(match) {
@@ -307,7 +305,6 @@ function parseVoiceExpense(text) {
   }
 }
 
-    // --------------- HEADER -----------------
 function Header({onAdd, onImport, onExport, showChart, toggleChart}) {
   return (
     <header className="onyx-header flex items-center justify-between px-5 pt-4 pb-1 select-none">
@@ -332,8 +329,6 @@ function Header({onAdd, onImport, onExport, showChart, toggleChart}) {
     </header>
   );
 }
-
-// --------------- BADGE ANIMÉ -----------------
 function Badge({label, icon, color, className=""}) {
   return (
     <div className={`flex items-center px-3 py-1 rounded-xl font-medium text-sm badge-anim-pop shadow-md`} style={{background:color+"44",color}} >
@@ -342,8 +337,6 @@ function Badge({label, icon, color, className=""}) {
     </div>
   );
 }
-
-// --------------- CONFETTI / ANIM -----------------
 function fireConfetti() {
   if(window.confetti){
     window.confetti({
@@ -354,10 +347,7 @@ function fireConfetti() {
     });
   }
 }
-
-// --------------- DASHBOARD + GRAPHIQUE -----------------
 function Dashboard({transactions, onEdit, showChart, solde, epargne}) {
-  // Données pour le graphique intelligent
   const sorted = React.useMemo(()=>[...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date)),[transactions]);
   const totalRevenus = sum(transactions.filter(t=>t.type==="income"), t=>t.amount);
   let points = [];
@@ -372,7 +362,6 @@ function Dashboard({transactions, onEdit, showChart, solde, epargne}) {
   if(!points.length && totalRevenus>0){
     points = [{date:new Date(),cumul:totalRevenus,t:{}}];
   }
-  // Format pour labels : 
   const labels = points.map(pt=>formatDate(pt.date));
   const dataCumul = points.map(pt=>pt.cumul);
   const chartRef = React.useRef();
@@ -443,7 +432,6 @@ function Dashboard({transactions, onEdit, showChart, solde, epargne}) {
   );
 }
 
-// --------------- TRANSACTION LIST ---------------
 function TransactionList({transactions, onEdit, onDelete}) {
   if (!transactions.length) return (
     <div className="glass px-8 py-12 my-12 text-center text-gray-300">
@@ -493,7 +481,6 @@ function TransactionList({transactions, onEdit, onDelete}) {
   );
 }
 
-// --------------- AJOUT/EDITION MODAL ---------------
 function AddEditModal({open, onClose, onSave, editTx, onVoice}) {
   const [title, setTitle] = React.useState(editTx?editTx.title:"");
   const [amount, setAmount] = React.useState(editTx?editTx.amount:"");
@@ -568,7 +555,6 @@ function AddEditModal({open, onClose, onSave, editTx, onVoice}) {
   );
 }
 
-// --------------- APP PRINCIPALE ---------------
 function App() {
   const [transactions, setTransactions] = React.useState(()=> {
     try {
@@ -594,17 +580,15 @@ function App() {
       }
     }
   });
-  // Sauvegarde locale
   React.useEffect(()=>{
     localStorage.setItem("onyx-budget-v2", JSON.stringify(transactions));
   },[transactions]);
   React.useEffect(()=>{
     localStorage.setItem("onyx-budget-v2-showChart", showChart?"true":"false");
   },[showChart]);
-  // Calculs
   const solde = sum(transactions.filter(t=>t.type==="income"), t=>t.amount) - sum(transactions.filter(t=>t.type==="expense"), t=>t.amount);
   const epargne = sum(transactions.filter(t=>t.category.name==="Épargne"), t=>t.amount);
-  // Events
+
   function handleAdd() { setEditTx(null); setModal(true);}
   function handleEdit(tx) { setEditTx(tx); setModal(true);}
   function handleDelete(tx) {
@@ -654,10 +638,9 @@ function App() {
   function handleVoice(cb) {
     setVoiceError("");
     micStart();
-    setTimeout(()=>micStop(),12000); // sécurité
-    // callback via useSpeechRecognition
+    setTimeout(()=>micStop(),12000);
   }
-  // --- RENDER ---
+
   return (
     <div className="max-w-5xl mx-auto pb-16">
       <Header
@@ -692,10 +675,8 @@ function App() {
     </div>
   );
 }
-
-// --- MOUNT REACT ---
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-
-  </script>
+</script>
 </body>
 </html>
+    
