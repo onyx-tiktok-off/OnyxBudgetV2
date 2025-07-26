@@ -68,7 +68,7 @@
     @keyframes checkMark {
       0%{ transform:scale(0) rotate(-40deg);}
       50%{ transform:scale(1.2) rotate(8deg);}
-      75%{ transform:scale(.92) rotate(-4deg);}
+      75%{ transform:.92) rotate(-4deg);}
       100%{ transform:scale(1) rotate(0);}
     }
   </style>
@@ -272,11 +272,12 @@ function getDailyBalances(transactions) {
     days: monthDays
   };
 }
-function PremiumChart({transactions}) {
+function PremiumChart({transactions, onMouseLeave}) {
   const chartRef = React.useRef();
   const {labels, data, days} = getDailyBalances(transactions);
   const totalRevenus = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
   const [hoverPoint, setHoverPoint] = React.useState(null);
+
   React.useEffect(()=>{
     if(chartRef.current){
       const ctx = chartRef.current.getContext("2d");
@@ -357,6 +358,11 @@ function PremiumChart({transactions}) {
           animation: {duration:900, easing:'easeOutQuint'}
         }
       });
+      // Gestion disparition hoverPoint au leave du canvas
+      chartRef.current.onmouseleave = () => {
+        setHoverPoint(null);
+        onMouseLeave && onMouseLeave();
+      }
     }
     return ()=>{ if(window.myChart) window.myChart.destroy(); }
   },[transactions]);
@@ -389,15 +395,39 @@ function PremiumChart({transactions}) {
 }
 
 function Dashboard({transactions, onAddTx, onExport, onImport}) {
+  // --- Affichage graphique ON/OFF avec persistence locale
+  const [showChart, setShowChart] = React.useState(true);
+  React.useEffect(()=>{
+    const s = localStorage.getItem('onyx_budget_show_chart');
+    if(s!==null) setShowChart(s==="true");
+  },[]);
+  React.useEffect(()=>{
+    localStorage.setItem('onyx_budget_show_chart', showChart);
+  },[showChart]);
   return (
     <div>
       <MetricsCards transactions={transactions} />
-      <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
-        <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
-          <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
-          <PremiumChart transactions={transactions}/>
-        </div>
+      <div className="flex items-center justify-end px-2 mt-2 mb-2">
+        <button
+          className={"font-semibold rounded-xl px-4 py-2 transition shadow " +
+            (showChart ? "bg-[#ef4444]/80 hover:bg-[#ef4444]/90 text-white" : "bg-[#10b981]/80 hover:bg-[#10b981]/90 text-white")}
+          onClick={()=>setShowChart(v=>!v)}
+        >
+          {showChart ? (
+            <><Lucide icon="eye-off" className="inline mr-1" size={18}/> Cacher le graphique</>
+          ) : (
+            <><Lucide icon="eye" className="inline mr-1" size={18}/> Afficher le graphique</>
+          )}
+        </button>
       </div>
+      {showChart && (
+        <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
+          <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
+            <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
+            <PremiumChart transactions={transactions}/>
+          </div>
+        </div>
+      )}
       <div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}>
         <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
           <Lucide icon="plus-circle"/> Ajouter transaction
@@ -414,7 +444,7 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
   );
 }
 
-// ---------- RESTE DU CODE ----------
+// ----------- RESTE INCHANGÉ -----------
 // (CategorySelect, CategoryFilter, TransactionList, AddOrEditModal, SettingsModal, useLocalTransactions...)
 
 function CategorySelect({cat, setCat, categories}) {
