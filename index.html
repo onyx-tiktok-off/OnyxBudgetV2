@@ -68,12 +68,8 @@
     @media (max-width: 680px) {
       html, body { font-size: 15px; }
     }
-    /* Empêche le menu custom de dépasser l'écran */
-    .menu-categories {
-      max-height: 240px;
-      overflow-y: auto;
-      z-index: 99;
-    }
+    /* Correction : le texte du menu cat est toujours blanc */
+    .menu-categories button, .menu-categories span, .menu-categories { color: #fff !important; }
   </style>
 </head>
 <body>
@@ -391,14 +387,14 @@ function CategorySelect({cat, setCat, categories}) {
           {categories.map(c=>(
             <button type="button"
               key={c.name}
-              className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left"
+              className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
               onClick={()=>{
                 setCat(c.name);
                 setShowCatMenu(false);
               }}
             >
               <Lucide icon={c.icon} color={c.color} size={20}/>
-              {c.name}
+              <span className="text-white">{c.name}</span>
             </button>
           ))}
         </div>
@@ -438,17 +434,17 @@ function CategoryFilter({cat, setCat, transactions}) {
       {showCatMenu && (
         <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[190px] max-h-60 overflow-y-auto menu-categories">
           <button type="button"
-            className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left"
+            className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
             onClick={()=>{
               setCat("all");
               setShowCatMenu(false);
             }}
-          ><Lucide icon="list" size={18}/> Toutes catégories</button>
+          ><Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span></button>
           {uniqueCats.map(c=>{
             const catObj = transactions.find(t=>t.category.name===c)?.category;
             return (
               <button type="button"
-                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left"
+                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
                 key={c}
                 onClick={()=>{
                   setCat(c);
@@ -456,7 +452,7 @@ function CategoryFilter({cat, setCat, transactions}) {
                 }}
               >
                 <Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/>
-                {c}
+                <span className="text-white">{c}</span>
               </button>
             );
           })}
