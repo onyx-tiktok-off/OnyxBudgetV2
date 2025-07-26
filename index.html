@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Onyx Budget V2</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    html, body {
+      min-height: 100vh;
+      font-family: 'Inter', 'Montserrat', Arial, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 100%);
+      overflow-x: hidden;
+    }
+    .glass {
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.15);
+      box-shadow: 0 4px 48px 8px rgba(99,102,241,0.12), 0 2px 8px rgba(0,217,255,0.12);
+      backdrop-filter: blur(24px);
+      border-radius: 2rem;
+    }
+    select, select option, select optgroup {
+      background: #18181b !important;
+      color: #fff !important;
+    }
+    ::-webkit-scrollbar {width: 8px;background: rgba(26,0,51,0.5);}
+    ::-webkit-scrollbar-thumb {background: linear-gradient(135deg, #6366f1 0, #00d9ff 100%);border-radius: 4px;}
+    ::selection {
+      background: #6366f1 !important;
+      color: #fff !important;
+    }
+    input::selection, textarea::selection {
+      background: #6366f1 !important;
+      color: #fff !important;
+    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=Montserrat:wght@500;700&display=swap');
+    .onyx-header {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      border-radius: 0 !important;
+    }
+    .onyx-title {
+      font-family: 'Montserrat', 'Inter', Arial, sans-serif;
+      font-weight: 500;
+      font-size: 2.2rem;
+      letter-spacing: .02em;
+      background: linear-gradient(90deg,#fff 60%,#babdc4 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-fill-color: transparent;
+      line-height: 1.26;
+      display: inline-block;
+      padding-bottom: 2px;
+      margin-top: 1px;
+    }
+    @media (max-width:600px) {
+      .onyx-title { font-size: 1.3rem;}
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+
+function Lucide(props) {
+  React.useEffect(()=>{if(window.lucide) window.lucide.createIcons();},[props.icon]);
+  return <i data-lucide={props.icon} className={props.className} style={{display:"inline-block",verticalAlign:"middle",color:props.color||"inherit"}}></i>
+}
+
+const CATEGORIES = [
+  {icon:"wallet", name:"Revenus", color:"#10b981"},
+  {icon:"shopping-cart", name:"Alimentation", color:"#00d9ff"},
+  {icon:"utensils", name:"Restaurants", color:"#ffb700"},
+  {icon:"coffee", name:"Cafés / Bars", color:"#ff006e"},
+  {icon:"home", name:"Logement", color:"#6366f1"},
+  {icon:"flame", name:"Énergie / Gaz", color:"#6366f1"},
+  {icon:"droplet", name:"Eau", color:"#0ea5e9"},
+  {icon:"wifi", name:"Internet / Télécom", color:"#6366f1"},
+  {icon:"phone", name:"Téléphone", color:"#6366f1"},
+  {icon:"car", name:"Voiture", color:"#2563eb"},
+  {icon:"bus", name:"Transports en commun", color:"#22d3ee"},
+  {icon:"bicycle", name:"Vélo / Mobilité douce", color:"#06b6d4"},
+  {icon:"gas-pump", name:"Carburant", color:"#fdba74"},
+  {icon:"plane", name:"Voyages", color:"#38bdf8"},
+  {icon:"train", name:"Train", color:"#3b82f6"},
+  {icon:"shopping-bag", name:"Shopping", color:"#f472b6"},
+  {icon:"gift", name:"Cadeaux", color:"#ef4444"},
+  {icon:"banknote", name:"Impôts / Taxes", color:"#a21caf"},
+  {icon:"heart-pulse", name:"Santé", color:"#ef4444"},
+  {icon:"user", name:"Famille", color:"#fb7185"},
+  {icon:"users", name:"Social", color:"#00d9ff"},
+  {icon:"book", name:"Éducation", color:"#818cf8"},
+  {icon:"briefcase", name:"Travail", color:"#6366f1"},
+  {icon:"tv", name:"Abonnements", color:"#6366f1"},
+  {icon:"music", name:"Divertissement / Musique", color:"#a3e635"},
+  {icon:"gamepad-2", name:"Jeux", color:"#0ea5e9"},
+  {icon:"star", name:"Bonus", color:"#facc15"},
+  {icon:"hammer", name:"Bricolage", color:"#eab308"},
+  {icon:"paw-print", name:"Animaux", color:"#10b981"},
+  {icon:"palette", name:"Culture", color:"#c026d3"},
+  {icon:"film", name:"Cinéma / Spectacles", color:"#f59e42"},
+  {icon:"trophy", name:"Sports", color:"#f43f5e"},
+  {icon:"smartphone", name:"Électronique", color:"#0ea5e9"},
+  {icon:"credit-card", name:"Crédit", color:"#6366f1"},
+  {icon:"umbrella", name:"Assurance", color:"#818cf8"},
+  {icon:"piggy-bank", name:"Épargne", color:"#10b981"},
+  {icon:"repeat", name:"Dépenses récurrentes", color:"#6366f1"},
+  {icon:"building-2", name:"Charges de copropriété", color:"#f59e42"},
+  {icon:"flower", name:"Jardin / Plantes", color:"#10b981"},
+  {icon:"truck", name:"Livraison", color:"#fbbf24"},
+  {icon:"scissors", name:"Beauté / Coiffeur", color:"#f472b6"},
+  {icon:"baby", name:"Enfants", color:"#a3e635"},
+  {icon:"bug", name:"Imprévus", color:"#38bdf8"},
+  {icon:"smile", name:"Autre", color:"#d1d5db"}
+];
+
+const formatAmount = (n) => n.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+const formatDate = (d) => new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
+const sum = (arr, fn) => arr.reduce((acc,cur)=>acc+fn(cur),0);
+const randomId = () => Math.random().toString(36).slice(2,10);
+
+function sortByDateDesc(arr) {
+  return arr.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+
+// ----- HEADER -----
+function Header() {
+  return (
+    <header className="onyx-header flex items-center px-6 py-5 mb-4" style={{zIndex:20, position:"relative", minHeight:"80px"}}>
+      <div className="flex items-center gap-5">
+        <img
+          src="https://i.ibb.co/5WMnx7y6/8ba349756916.png"
+          alt="Onyx Budget"
+          className="h-[66px] w-[66px] rounded-full shadow-lg border-2 border-[#444] bg-[#232]"
+          style={{background:"linear-gradient(120deg,#2d2f32 60%,#6e6f75 120%)"}}
+        />
+        <span className="onyx-title">
+          Onyx Budget V2
+        </span>
+      </div>
+    </header>
+  );
+}
+
+function MetricsCards({transactions}) {
+  const totalIncome = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
+  const totalExpense = sum(transactions.filter(t=>t.type==="expense"), t=>+t.amount);
+  // Somme des transactions "Épargne" seulement (quel que soit le type)
+  const savings = sum(transactions.filter(t=>t.category?.name==="Épargne"), t=>+t.amount);
+  const balance = totalIncome-totalExpense;
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
+      <div className="glass p-4 md:p-6 shadow-xl">
+        <div className="flex items-center gap-2">
+          <Lucide icon="credit-card" color="#6366f1"/>
+          <span className="uppercase text-xs opacity-60 text-white">SOLDE</span>
+        </div>
+        <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center text-white">{formatAmount(balance)}</div>
+      </div>
+      <div className="glass p-4 md:p-6 shadow-xl">
+        <div className="flex items-center gap-2">
+          <Lucide icon="download" color="#10b981"/>
+          <span className="uppercase text-xs opacity-60 text-white">REVENUS</span>
+        </div>
+        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(totalIncome)}</div>
+      </div>
+      <div className="glass p-4 md:p-6 shadow-xl">
+        <div className="flex items-center gap-2">
+          <Lucide icon="upload" color="#ef4444"/>
+          <span className="uppercase text-xs opacity-60 text-white">DÉPENSES</span>
+        </div>
+        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(totalExpense)}</div>
+      </div>
+      <div className="glass p-4 md:p-6 shadow-xl">
+        <div className="flex items-center gap-2">
+          <Lucide icon="piggy-bank" color="#ff006e"/>
+          <span className="uppercase text-xs opacity-60 text-white">ÉCONOMIES</span>
+        </div>
+        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(savings)}</div>
+      </div>
+    </div>
+  );
+}
+
+// ------- DAILY GRAPH UTILS ---------
+function getMonthDays(startDate, transactions) {
+  const txSorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let firstDate = startDate;
+  if (txSorted.length) {
+    firstDate = new Date(txSorted[0].date);
+  }
+  const year = firstDate.getFullYear();
+  const month = firstDate.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const days = [];
+  for(let i=1; i<=daysInMonth; i++) {
+    days.push(new Date(year, month, i));
+  }
+  return days;
+}
+
+function getDailyBalances(transactions) {
+  if (!transactions.length) return {labels:[], data:[]};
+  const monthDays = getMonthDays(new Date(), transactions);
+  const sorted = sortByDateDesc([...transactions]).reverse();
+  let balances = [];
+  let current = 0;
+  let idx = 0;
+  monthDays.forEach(day=>{
+    while (idx<sorted.length && (new Date(sorted[idx].date)).toDateString() === day.toDateString()) {
+      current += (sorted[idx].type==="income"?+sorted[idx].amount:-+sorted[idx].amount);
+      idx++;
+    }
+    balances.push(current);
+  });
+  return {
+    labels: monthDays.map(d=>`${d.getDate().toString().padStart(2,'0')} ${d.toLocaleString("fr-FR",{month:"short"})}`),
+    data: balances
+  };
+}
+
+function Dashboard({transactions, onAddTx, onExport, onImport}) {
+  const chartRef = React.useRef();
+  React.useEffect(()=>{
+    if(chartRef.current){
+      const ctx = chartRef.current.getContext("2d");
+      if(window.myChart) window.myChart.destroy();
+
+      let gradient = ctx.createLinearGradient(0,0,0,200);
+      gradient.addColorStop(0, "#00d9ff99");
+      gradient.addColorStop(1, "#1a003355");
+      let gradientLine = ctx.createLinearGradient(0,0,chartRef.current.width,0);
+      gradientLine.addColorStop(0,"#00d9ff");
+      gradientLine.addColorStop(0.5,"#6366f1");
+      gradientLine.addColorStop(1,"#ff006e");
+
+      const {labels, data} = getDailyBalances(transactions);
+
+      window.myChart = new window.Chart(ctx, {
+        type:"line",
+        data:{
+          labels: labels.length ? labels : ["—"],
+          datasets: [{
+            label:"Solde",
+            data: data.length ? data : [0],
+            fill: true,
+            borderWidth: 3,
+            borderColor: gradientLine,
+            backgroundColor: gradient,
+            pointRadius: data.length>1 ? 5 : 10,
+            pointBackgroundColor: "#00d9ff",
+            pointBorderWidth: 2,
+            pointBorderColor: "#fff",
+            pointHoverRadius: 14,
+            tension: 0.5,
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{display:false},
+            tooltip: {
+              enabled: true,
+              backgroundColor: "#1a0033dd",
+              titleColor: "#00d9ff",
+              bodyColor: "#fff",
+              borderColor: "#6366f1",
+              borderWidth: 1.5,
+              padding: 12,
+              titleFont: {weight:"bold",size:16},
+              bodyFont: {size:14}
+            },
+          },
+          elements: {
+            line: { borderJoinStyle:"round", borderCapStyle:"round" }
+          },
+          scales:{
+            y:{
+              ticks:{color:"#fff", font:{size:14}},
+              grid:{color:"rgba(99,102,241,0.10)", lineWidth:1.2},
+              border:{color:"rgba(99,102,241,0.17)"},
+              beginAtZero:true,
+            },
+            x:{
+              ticks:{color:"#fff", font:{size:14}},
+              grid:{color:"rgba(99,102,241,0.07)",drawOnChartArea:false},
+              border:{color:"rgba(99,102,241,0.17)"},
+              autoSkip: false,
+              maxRotation: 0,
+              minRotation: 0
+            }
+          },
+          animation: {duration:1200, easing:'easeOutQuint'}
+        }
+      });
+    }
+  },[transactions]);
+  return (
+    <div>
+      <MetricsCards transactions={transactions} />
+      <div className="glass my-6 p-0 md:p-0 overflow-x-auto">
+        <div className="p-4">
+          <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
+          <div style={{minHeight:220, position:"relative"}}>
+            <canvas ref={chartRef} height={110}></canvas>
+            {
+              (!transactions || transactions.length===0) &&
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-white/40 text-xl font-bold pointer-events-none select-none" style={{letterSpacing:1}}>
+                <Lucide icon="moon" size={48} color="#6366f1" />
+                <span className="mt-3">Aucune donnée</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col md:flex-row gap-3 justify-end">
+        <button className="bg-[#00d9ff] hover:bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
+          <Lucide icon="plus-circle"/> Ajouter transaction
+        </button>
+        <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover" onClick={onExport}>
+          <Lucide icon="download" /> Exporter JSON
+        </button>
+        <label className="bg-[#10b981] text-white font-bold px-5 py-2 rounded-xl neon-hover cursor-pointer flex items-center gap-2">
+          <Lucide icon="upload" /> Importer JSON
+          <input type="file" accept=".json" className="hidden" onChange={onImport}/>
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function TransactionList({transactions, onEdit, onDelete}) {
+  const [query, setQuery] = React.useState("");
+  const [cat, setCat] = React.useState("all");
+  const filtered = transactions.filter(tx=>{
+    const q = query.toLowerCase();
+    const matchesQ = !q || tx.title.toLowerCase().includes(q) || (tx.tags||[]).some(tag=>tag.includes(q));
+    const matchesCat = cat==="all"||tx.category.name===cat;
+    return matchesQ && matchesCat;
+  });
+  return (
+    <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto">
+      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6 mb-4">
+        <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-[#6366f1] neon-hover" />
+        <select value={cat} onChange={e=>setCat(e.target.value)} className="bg-black text-white px-3 py-2 rounded-xl outline-none neon-hover">
+          <option value="all">Toutes catégories</option>
+          {[...new Set(transactions.map(t=>t.category.name))].map(c=>(
+            <option value={c} key={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-white/90 text-sm">
+          <thead>
+            <tr className="border-b border-white/10">
+              <th className="text-left py-2">Titre</th>
+              <th className="text-left py-2">Catégorie</th>
+              <th className="text-left py-2">Montant</th>
+              <th className="text-left py-2">Date</th>
+              <th className="text-left py-2">Type</th>
+              <th className="text-left py-2">Tags</th>
+              <th className="text-left py-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(tx=>(
+              <tr key={tx.id} className="hover:bg-white/10 transition">
+                <td className="py-2">{tx.title}</td>
+                <td className="py-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg" style={{background:tx.category.color+"22"}}>
+                    <Lucide icon={tx.category.icon} color={tx.category.color} size={18}/>{tx.category.name}
+                  </span>
+                </td>
+                <td className="py-2 font-bold" style={{color:tx.type==="income"?"#10b981":"#ef4444"}}>
+                  {tx.type==="expense"? "-": "+"}{formatAmount(tx.amount)}
+                </td>
+                <td className="py-2">{formatDate(tx.date)}</td>
+                <td className="py-2">{tx.type==="income"?<span className="font-bold text-[#10b981]">Entrée</span>:<span className="font-bold text-[#ef4444]">Sortie</span>}</td>
+                <td className="py-2">{(tx.tags||[]).map(tag=><span key={tag} className="px-2 py-0.5 mx-1 bg-white/10 rounded-full">{tag}</span>)}</td>
+                <td className="py-2 flex gap-2">
+                  <button onClick={()=>onEdit(tx)} title="Éditer" className="hover:text-[#6366f1]"><Lucide icon="edit" /></button>
+                  <button onClick={()=>onDelete(tx.id)} title="Supprimer" className="hover:text-[#ef4444]"><Lucide icon="trash-2" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!filtered.length && <div className="text-white/60 text-center my-6">Aucune transaction ne correspond.</div>}
+      </div>
+    </div>
+  );
+}
+
+function AddOrEditModal({show, onClose, onSave, tx}) {
+  const isEdit = !!tx;
+  const [title, setTitle] = React.useState(tx?.title||"");
+  const [amount, setAmount] = React.useState(tx?.amount||"");
+  const [type, setType] = React.useState(tx?.type||"expense");
+  const [cat, setCat] = React.useState(tx?.category?.name||CATEGORIES[0].name);
+  const [date, setDate] = React.useState(tx?.date ? new Date(tx.date).toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
+  const [tags, setTags] = React.useState((tx?.tags||[]).join(', '));
+  React.useEffect(()=>{
+    if(tx){
+      setTitle(tx.title);
+      setAmount(tx.amount);
+      setType(tx.type);
+      setCat(tx.category.name);
+      setDate(new Date(tx.date).toISOString().slice(0,10));
+      setTags((tx.tags||[]).join(', '));
+    } else {
+      setTitle(""); setAmount(""); setType("expense"); setCat(CATEGORIES[0].name); setDate(new Date().toISOString().slice(0,10)); setTags("");
+    }
+  }, [tx, show]);
+  function submit(e) {
+    e.preventDefault();
+    if(!title||!amount||isNaN(+amount)) return;
+    onSave({
+      id: tx?.id || randomId(),
+      title,
+      amount: Number(amount),
+      date: new Date(date),
+      category: CATEGORIES.find(c=>c.name===cat),
+      type,
+      tags: tags.split(",").map(s=>s.trim()).filter(Boolean)
+    });
+    onClose();
+  }
+  if(!show) return null;
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
+      <div className="glass max-w-lg w-full p-6 relative">
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <h2 className="text-xl font-bold text-white mb-2">{isEdit ? "Modifier" : "Ajouter"} une transaction</h2>
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block text-white/70">Titre</label>
+            <input required type="text" value={title} onChange={e=>setTitle(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
+          </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="block text-white/70">Montant</label>
+              <input required type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
+            </div>
+            <div className="flex-1">
+              <label className="block text-white/70">Type</label>
+              <select value={type} onChange={e=>setType(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none">
+                <option value="expense">Sortie</option>
+                <option value="income">Entrée</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-white/70">Catégorie</label>
+            <select value={cat} onChange={e=>setCat(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none">
+              {CATEGORIES.map(c=><option value={c.name} key={c.name}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-white/70">Date</label>
+            <input required type="date" value={date} onChange={e=>setDate(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
+          </div>
+          <div>
+            <label className="block text-white/70">Tags (séparés par ,)</label>
+            <input type="text" value={tags} onChange={e=>setTags(e.target.value)} placeholder="courses,loisir..." className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
+          </div>
+          <button type="submit" className="w-full py-2 font-bold rounded-xl neon-hover text-white bg-[#00d9ff] mt-3 transition">
+            {isEdit ? "Enregistrer" : "Ajouter"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function SettingsModal({show, onClose}) {
+  if(!show) return null;
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
+      <div className="glass max-w-sm w-full p-6 relative">
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <h2 className="text-xl font-bold text-white mb-2">Paramètres utilisateur</h2>
+        <button className="mt-4 py-2 font-bold rounded-xl neon-hover text-white bg-[#6366f1] transition" onClick={onClose}>
+          Fermer
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function useLocalTransactions() {
+  const [transactions, setTransactions] = React.useState([]);
+  // Charge au démarrage
+  React.useEffect(()=>{
+    try {
+      const data = localStorage.getItem("onyx_budget_v2");
+      if(data){
+        const arr = JSON.parse(data);
+        setTransactions(sortByDateDesc(Array.isArray(arr)?arr:[]));
+      }
+    } catch {}
+  },[]);
+  // Sauvegarde à chaque changement
+  React.useEffect(()=>{
+    localStorage.setItem("onyx_budget_v2", JSON.stringify(transactions));
+  },[transactions]);
+  // Toujours trier
+  function setAndSort(arr) {
+    setTransactions(sortByDateDesc(arr));
+  }
+  return [transactions, setAndSort];
+}
+
+function App() {
+  const [transactions, setTransactions] = useLocalTransactions();
+  const [showModal, setShowModal] = React.useState(false);
+  const [editTx, setEditTx] = React.useState(null);
+  const [showSettings, setShowSettings] = React.useState(false);
+
+  function handleAddOrEdit(tx) {
+    setTransactions(prev=>{
+      const i = prev.findIndex(t=>t.id===tx.id);
+      let arr;
+      if(i>=0) {
+        arr = [...prev]; arr[i]=tx;
+      } else {
+        arr = [...prev, tx];
+      }
+      return sortByDateDesc(arr);
+    });
+  }
+  function handleDelete(id) {
+    setTransactions(prev=>sortByDateDesc(prev.filter(t=>t.id!==id)));
+  }
+  function handleExport() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions,null,2));
+    const link = document.createElement('a');
+    link.href = dataStr;
+    link.download = "transactions.json";
+    link.click();
+  }
+  function handleImport(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = evt=>{
+      try {
+        const json = JSON.parse(evt.target.result);
+        if(Array.isArray(json)) setTransactions(sortByDateDesc(json));
+        else alert("Fichier invalide !");
+      } catch {
+        alert("Erreur import JSON");
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  return (
+    <div className="relative z-10 px-2 md:px-12 py-2 md:py-8 max-w-5xl mx-auto">
+      <Header />
+      <Dashboard
+        transactions={transactions}
+        onAddTx={()=>{setEditTx(null); setShowModal(true);}}
+        onExport={handleExport}
+        onImport={handleImport}
+      />
+      <TransactionList
+        transactions={transactions}
+        onEdit={tx=>{setEditTx(tx); setShowModal(true);}}
+        onDelete={handleDelete}
+      />
+      <AddOrEditModal
+        show={showModal}
+        onClose={()=>setShowModal(false)}
+        onSave={handleAddOrEdit}
+        tx={editTx}
+      />
+      <SettingsModal show={showSettings} onClose={()=>setShowSettings(false)}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
