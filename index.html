@@ -127,11 +127,22 @@ const formatDate = (d) => new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",
 const sum = (arr, fn) => arr.reduce((acc,cur)=>acc+fn(cur),0);
 const randomId = () => Math.random().toString(36).slice(2,10);
 
-function sortByDateDesc(arr) {
-  return arr.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+function normalizeString(str) {
+  return (str||"")
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 }
 
-// ----- HEADER -----
+// --- NOUVEAU TRI DEMANDÉ ---
+function sortTransactions(arr) {
+  if (!Array.isArray(arr)) return [];
+  const income = arr.filter(t => t.type === "income").sort((a,b)=>b.amount - a.amount);
+  const expense = arr.filter(t => t.type === "expense").sort((a,b)=>b.amount - a.amount);
+  return [...income, ...expense];
+}
+
 function Header() {
   return (
     <header className="onyx-header flex items-center px-6 py-5 mb-4" style={{zIndex:20, position:"relative", minHeight:"80px"}}>
@@ -139,8 +150,8 @@ function Header() {
         <img
           src="https://i.ibb.co/5WMnx7y6/8ba349756916.png"
           alt="Onyx Budget"
-          className="h-[66px] w-[66px] rounded-full shadow-lg border-2 border-[#444] bg-[#232]"
-          style={{background:"linear-gradient(120deg,#2d2f32 60%,#6e6f75 120%)"}}
+          className="h-[99px] w-[99px]"
+          style={{objectFit:"contain", background:"none", border:"none", boxShadow:"none"}}
         />
         <span className="onyx-title">
           Onyx Budget V2
@@ -153,8 +164,12 @@ function Header() {
 function MetricsCards({transactions}) {
   const totalIncome = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
   const totalExpense = sum(transactions.filter(t=>t.type==="expense"), t=>+t.amount);
-  // Somme des transactions "Épargne" seulement (quel que soit le type)
-  const savings = sum(transactions.filter(t=>t.category?.name==="Épargne"), t=>+t.amount);
+  const savings = sum(
+    transactions.filter(t=>
+      t.category && normalizeString(t.category.name) === normalizeString("Épargne")
+    ),
+    t=>+t.amount
+  );
   const balance = totalIncome-totalExpense;
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-4">
@@ -210,7 +225,7 @@ function getMonthDays(startDate, transactions) {
 function getDailyBalances(transactions) {
   if (!transactions.length) return {labels:[], data:[]};
   const monthDays = getMonthDays(new Date(), transactions);
-  const sorted = sortByDateDesc([...transactions]).reverse();
+  const sorted = sortTransactions([...transactions]).reverse();
   let balances = [];
   let current = 0;
   let idx = 0;
@@ -322,13 +337,13 @@ function Dashboard({transactions, onAddTx, onExport, onImport}) {
         </div>
       </div>
       <div className="flex flex-col md:flex-row gap-3 justify-end">
-        <button className="bg-[#00d9ff] hover:bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
+        <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
           <Lucide icon="plus-circle"/> Ajouter transaction
         </button>
         <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover" onClick={onExport}>
           <Lucide icon="download" /> Exporter JSON
         </button>
-        <label className="bg-[#10b981] text-white font-bold px-5 py-2 rounded-xl neon-hover cursor-pointer flex items-center gap-2">
+        <label className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover cursor-pointer flex items-center gap-2">
           <Lucide icon="upload" /> Importer JSON
           <input type="file" accept=".json" className="hidden" onChange={onImport}/>
         </label>
@@ -422,12 +437,19 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
   function submit(e) {
     e.preventDefault();
     if(!title||!amount||isNaN(+amount)) return;
+    const selectedCat = CATEGORIES.find(
+      c => normalizeString(c.name) === normalizeString(cat)
+    );
+    if (!selectedCat) {
+      alert("Catégorie invalide !");
+      return;
+    }
     onSave({
       id: tx?.id || randomId(),
       title,
       amount: Number(amount),
       date: new Date(date),
-      category: CATEGORIES.find(c=>c.name===cat),
+      category: selectedCat,
       type,
       tags: tags.split(",").map(s=>s.trim()).filter(Boolean)
     });
@@ -497,23 +519,20 @@ function SettingsModal({show, onClose}) {
 
 function useLocalTransactions() {
   const [transactions, setTransactions] = React.useState([]);
-  // Charge au démarrage
   React.useEffect(()=>{
     try {
       const data = localStorage.getItem("onyx_budget_v2");
       if(data){
         const arr = JSON.parse(data);
-        setTransactions(sortByDateDesc(Array.isArray(arr)?arr:[]));
+        setTransactions(sortTransactions(Array.isArray(arr)?arr:[]));
       }
     } catch {}
   },[]);
-  // Sauvegarde à chaque changement
   React.useEffect(()=>{
     localStorage.setItem("onyx_budget_v2", JSON.stringify(transactions));
   },[transactions]);
-  // Toujours trier
   function setAndSort(arr) {
-    setTransactions(sortByDateDesc(arr));
+    setTransactions(sortTransactions(arr));
   }
   return [transactions, setAndSort];
 }
@@ -525,19 +544,22 @@ function App() {
   const [showSettings, setShowSettings] = React.useState(false);
 
   function handleAddOrEdit(tx) {
-    setTransactions(prev=>{
-      const i = prev.findIndex(t=>t.id===tx.id);
-      let arr;
+    let arr = [];
+    if (transactions && Array.isArray(transactions)) {
+      const i = transactions.findIndex(t=>t.id===tx.id);
       if(i>=0) {
-        arr = [...prev]; arr[i]=tx;
+        arr = [...transactions];
+        arr[i] = tx;
       } else {
-        arr = [...prev, tx];
+        arr = [...transactions, tx];
       }
-      return sortByDateDesc(arr);
-    });
+    } else {
+      arr = [tx];
+    }
+    setTransactions(arr);
   }
   function handleDelete(id) {
-    setTransactions(prev=>sortByDateDesc(prev.filter(t=>t.id!==id)));
+    setTransactions(transactions.filter(t=>t.id!==id));
   }
   function handleExport() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions,null,2));
@@ -553,7 +575,7 @@ function App() {
     reader.onload = evt=>{
       try {
         const json = JSON.parse(evt.target.result);
-        if(Array.isArray(json)) setTransactions(sortByDateDesc(json));
+        if(Array.isArray(json)) setTransactions(json);
         else alert("Fichier invalide !");
       } catch {
         alert("Erreur import JSON");
