@@ -290,13 +290,10 @@ function setDateToMonth(date, targetYear, targetMonthIndex0) {
   const day = Math.min(d.getDate(), daysInTarget);
   return new Date(targetYear, targetMonthIndex0, day, d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
 }
-function isCurrentMonth(date) {
-  const d = new Date(date), now = new Date();
-  return d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
-}
-function isCurrentYear(date) {
-  const d = new Date(date), now = new Date();
-  return d.getFullYear()===now.getFullYear();
+function isCurrentMonthKey(key){
+  const now = new Date();
+  const current = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  return key === current;
 }
 
 /* ---------- BADGE ---------- */
@@ -347,15 +344,23 @@ function Header() {
   );
 }
 
-/* ----------- METRICS CARDS ----------- */
-function MetricsCards({transactions, scope, toggleScope}) {
+/* ----------- METRICS CARDS (MAJ : sensibles au mois vu) ----------- */
+function MetricsCards({transactions, scope, toggleScope, selectedMonthKey}) {
   const now = new Date();
-  const year = now.getFullYear();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  // Détermine le mois/année de référence en fonction de la vue
+  const effectiveMonthKey = selectedMonthKey && selectedMonthKey !== 'all'
+    ? selectedMonthKey
+    : currentMonthKey;
+
+  const [effYear, effMonth] = effectiveMonthKey.split('-').map(Number);
   const scopeIsYear = scope === 'year';
-  const dataset = (scopeIsYear
-    ? transactions.filter(t=>isCurrentYear(t.date))
-    : transactions.filter(t=>isCurrentMonth(t.date))
-  );
+
+  // Dataset basé sur la vue courante (mois sélectionné) ou l'année du mois sélectionné
+  const dataset = scopeIsYear
+    ? transactions.filter(t => new Date(t.date).getFullYear() === effYear)
+    : transactions.filter(t => monthKeyFromDate(t.date) === effectiveMonthKey);
 
   const totalIncome = sum(dataset.filter(t=>t.type==="income"), t=>+t.amount);
   const totalExpense = sum(dataset.filter(t=>t.type==="expense"), t=>+t.amount);
@@ -365,6 +370,10 @@ function MetricsCards({transactions, scope, toggleScope}) {
   );
   const balance = totalIncome - totalExpense;
 
+  const chipText = scopeIsYear
+    ? `Année ${effYear}${selectedMonthKey!=='all' && !isCurrentMonthKey(effectiveMonthKey) ? " (selon vue)" : ""}`
+    : (isCurrentMonthKey(effectiveMonthKey) ? "Mois courant" : formatMonthLabel(effectiveMonthKey));
+
   return (
     <div className="grid grid-cols-4 gap-4 my-4 overflow-x-auto min-w-[680px]">
       <div className="glass p-4 md:p-6 shadow-xl">
@@ -372,15 +381,15 @@ function MetricsCards({transactions, scope, toggleScope}) {
           <Lucide icon="credit-card"/>
           <span className="uppercase text-xs opacity-60 text-white">SOLDE</span>
           <span className="ml-auto chip-scope">
-            {scopeIsYear ? `Année ${year}` : `Mois courant`}
+            {chipText}
           </span>
         </div>
         <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center">{formatAmount(balance)}</div>
         <button className="mt-2 btn btn-secondary text-xs px-2 py-1"
           onClick={toggleScope}
-          title={scopeIsYear ? "Revenir au mois courant" : "Voir les totaux de l'année en cours"}
+          title={scopeIsYear ? (isCurrentMonthKey(effectiveMonthKey) ? "Revenir au mois courant" : `Voir ${formatMonthLabel(effectiveMonthKey)}`) : `Voir année ${effYear}`}
         >
-          <Lucide icon="refresh-ccw"/>{scopeIsYear ? "Afficher le mois" : `Afficher l'année ${year}`}
+          <Lucide icon="refresh-ccw"/>{scopeIsYear ? "Afficher le mois" : `Afficher l'année ${effYear}`}
         </button>
       </div>
 
@@ -542,10 +551,15 @@ function PremiumChart({transactions}) {
 }
 
 /* ------- DASHBOARD ------- */
-function Dashboard({transactions, metricsScope, toggleMetricsScope, onAddTx, onExport, onImport}) {
+function Dashboard({transactions, metricsScope, toggleMetricsScope, onAddTx, onExport, onImport, selectedMonthKey}) {
   return (
     <div>
-      <MetricsCards transactions={transactions} scope={metricsScope} toggleScope={toggleMetricsScope}/>
+      <MetricsCards
+        transactions={transactions}
+        scope={metricsScope}
+        toggleScope={toggleMetricsScope}
+        selectedMonthKey={selectedMonthKey}
+      />
       <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
         <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
           <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
@@ -659,7 +673,7 @@ function MonthFilter({monthFilter, setMonthFilter, months}) {
       </button>
       {open && (
         <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[220px] max-h-72 overflow-y-auto">
-          <button className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center gap-2"
+          <button className="w-full text-left px-4 py-2 hover:bg:white/10 hover:bg-white/10 text-white flex items-center gap-2"
             onClick={()=>{setMonthFilter('all'); setOpen(false);}}>
             <Lucide icon="list" size={18}/> Tous les mois
           </button>
@@ -690,7 +704,7 @@ function MonthHistoryModal({show, onClose, months, onShowMonth, onCopyMonth, onE
           <Lucide icon="history"/> Historique des mois
         </h2>
         {months.length ? (
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-2 max-h:[60vh] max-h-[60vh] overflow-y-auto">
             {months.map(m=>(
               <div key={m.key} className="flex items-center justify-between bg:white/5 rounded-xl px-3 py-3 border border-white/10" style={{background: "rgba(255,255,255,.05)"}}>
                 <div className="flex items-center gap-3">
@@ -792,7 +806,7 @@ function EditMonthModal({show, onClose, sourceKey, onApply}) {
           <div className="text-white/80 text-sm">Mois source : <span className="font-semibold">{formatMonthLabel(sourceKey||'')}</span></div>
           <div>
             <label className="block text-white/70 mb-1">Nouveau mois</label>
-            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
+            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg:white/5 bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
           <button className="btn btn-secondary w-full justify-center"
             onClick={()=>{
@@ -952,7 +966,7 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
             <input required type="date" value={date} onChange={e=>setDate(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
           <div>
-            <label className="block text-white/70">Tags (séparés par ,)</label>
+            <label className="block text:white/70 block text-white/70">Tags (séparés par ,)</label>
             <input type="text" value={tags} onChange={e=>setTags(e.target.value)} placeholder="courses,loisir..." className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
           <div>
@@ -1111,6 +1125,7 @@ function App() {
         onAddTx={()=>{setEditTx(null); setShowModal(true);}}
         onExport={handleExport}
         onImport={handleImport}
+        selectedMonthKey={monthFilter}   /* <<< NOUVEAU : les métriques suivent le mois vu */
       />
       <TransactionList
         transactions={transactions}
