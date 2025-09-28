@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Onyx Budget V2</title>
 
-  <!-- Favicon & Apple Touch Icon (logo du site) -->
+  <!-- Favicon & Apple Touch Icon -->
   <link rel="icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
   <link rel="shortcut icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
   <link rel="apple-touch-icon" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
@@ -18,6 +18,8 @@
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
     :root{
@@ -136,9 +138,17 @@
   </style>
 </head>
 <body>
-  <!-- Bouton de bascule de thème -->
+  <!-- Thème -->
   <button id="themeBtn" class="theme-toggle" title="Changer de thème">
     <i data-lucide="palette"></i>
+  </button>
+
+  <!-- Google Auth UI -->
+  <button id="googleSignIn" class="btn" style="position:fixed; top:12px; right:12px; z-index:60;">
+    Se connecter
+  </button>
+  <button id="googleSignOut" class="btn btn-ghost" style="position:fixed; top:60px; right:12px; z-index:60; display:none;">
+    Se déconnecter
   </button>
 
   <div id="root"></div>
@@ -148,7 +158,6 @@
     (function initTheme(){
       const saved = localStorage.getItem('onyx_theme');
       if(saved==='red'){ document.documentElement.classList.add('theme-red'); }
-      // Icones initiales
       if (window.lucide) window.lucide.createIcons();
 
       function toggleTheme(){
@@ -158,12 +167,10 @@
         if (window.lucide) window.lucide.createIcons();
       }
 
-      // Attache IMMÉDIATEMENT l'écouteur (sans attendre DOMContentLoaded)
       var btn = document.getElementById('themeBtn');
       if (btn) {
         btn.addEventListener('click', toggleTheme);
       } else {
-        // Cas extrême: si le bouton n’est pas encore là, on réessaie très vite
         const iv = setInterval(()=>{
           btn = document.getElementById('themeBtn');
           if (btn) { btn.addEventListener('click', toggleTheme); clearInterval(iv); }
@@ -171,9 +178,108 @@
         setTimeout(()=>clearInterval(iv), 2000);
       }
     })();
+
+    // Branche les boutons Google après chargement
+    window.addEventListener("load", function(){
+      if (typeof initGoogleAuth === "function") initGoogleAuth();
+      const btnIn = document.getElementById("googleSignIn");
+      const btnOut = document.getElementById("googleSignOut");
+      if(btnIn) btnIn.addEventListener("click", function(){ if (window.signInWithGoogle) window.signInWithGoogle(); });
+      if(btnOut) btnOut.addEventListener("click", function(){ if (window.signOutGoogle) window.signOutGoogle(); });
+    });
   </script>
 
   <script type="text/babel">
+/* ==================== Google Auth + Drive (AppData) ==================== */
+const GOOGLE = {
+  CLIENT_ID: "910313633485-js3ldfefrgtlc056i5t4go6r3b0ni0il.apps.googleusercontent.com",
+  SCOPES: "https://www.googleapis.com/auth/drive.appdata openid email profile"
+};
+
+let accessToken = null;
+let tokenClient = null;
+
+function initGoogleAuth() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE.CLIENT_ID,
+    scope: GOOGLE.SCOPES,
+    prompt: "",
+    callback: (resp) => {
+      accessToken = resp.access_token;
+      const inBtn = document.getElementById("googleSignIn");
+      const outBtn = document.getElementById("googleSignOut");
+      if (inBtn) inBtn.style.display = "none";
+      if (outBtn) outBtn.style.display = "inline-flex";
+      window.dispatchEvent(new Event("ONYX_SIGNED_IN"));
+    }
+  });
+}
+function signInWithGoogle(){ tokenClient?.requestAccessToken({prompt: "consent"}); }
+function signOutGoogle(){
+  if (accessToken && google?.accounts?.oauth2?.revoke) {
+    google.accounts.oauth2.revoke(accessToken, () => {});
+  }
+  accessToken = null;
+  const inBtn = document.getElementById("googleSignIn");
+  const outBtn = document.getElementById("googleSignOut");
+  if (inBtn) inBtn.style.display = "inline-flex";
+  if (outBtn) outBtn.style.display = "none";
+  window.dispatchEvent(new Event("ONYX_SIGNED_OUT"));
+}
+window.signInWithGoogle = signInWithGoogle;
+window.signOutGoogle = signOutGoogle;
+
+async function driveRequest(url, opts = {}) {
+  if (!accessToken) throw new Error("Non authentifié");
+  const headers = Object.assign({}, opts.headers || {}, { Authorization: `Bearer ${accessToken}` });
+  const res = await fetch(url, { ...opts, headers });
+  if (!res.ok) throw new Error(await res.text());
+  return res;
+}
+
+async function ensureAppDataFileId() {
+  const listRes = await driveRequest(
+    "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name%20%3D%20%27onyx_transactions.json%27"
+  );
+  const data = await listRes.json();
+  if (data.files && data.files.length) return data.files[0].id;
+
+  const boundary = "-------314159265358979323846";
+  const delimiter = `--${boundary}\r\n`;
+  const closeDelim = `--${boundary}--`;
+
+  const metadata = { name: "onyx_transactions.json", parents: ["appDataFolder"] };
+  const body =
+    delimiter +
+    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+    JSON.stringify(metadata) + "\r\n" +
+    delimiter +
+    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+    "[]\r\n" +
+    closeDelim;
+
+  const createRes = await driveRequest(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+    { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body }
+  );
+  const created = await createRes.json();
+  return created.id;
+}
+async function loadTransactionsFromDrive() {
+  const fileId = await ensureAppDataFileId();
+  const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  return await res.json();
+}
+async function saveTransactionsToDrive(transactions) {
+  const fileId = await ensureAppDataFileId();
+  await driveRequest(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(transactions) }
+  );
+}
+
+/* ==================== App ==================== */
 /* Utilitaire Lucide */
 function Lucide(props) {
   React.useEffect(()=>{ if(window.lucide) window.lucide.createIcons(); },[props.icon]);
@@ -297,7 +403,7 @@ function isCurrentMonthKey(key){
 }
 
 /* ---------- BADGE ---------- */
-function BadgeAchievement({show, onClose, type}) {
+function BadgeAchievement({show, type}) {
   if(!show) return null;
   let label, icon;
   if(type==="first_income") {label="Premier revenu !";icon="wallet";}
@@ -344,20 +450,14 @@ function Header() {
   );
 }
 
-/* ----------- METRICS CARDS (MAJ : sensibles au mois vu) ----------- */
+/* ----------- METRICS CARDS (sensibles au mois vu) ----------- */
 function MetricsCards({transactions, scope, toggleScope, selectedMonthKey}) {
   const now = new Date();
   const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-
-  // Détermine le mois/année de référence en fonction de la vue
-  const effectiveMonthKey = selectedMonthKey && selectedMonthKey !== 'all'
-    ? selectedMonthKey
-    : currentMonthKey;
-
-  const [effYear, effMonth] = effectiveMonthKey.split('-').map(Number);
+  const effectiveMonthKey = selectedMonthKey && selectedMonthKey !== 'all' ? selectedMonthKey : currentMonthKey;
+  const [effYear] = effectiveMonthKey.split('-').map(Number);
   const scopeIsYear = scope === 'year';
 
-  // Dataset basé sur la vue courante (mois sélectionné) ou l'année du mois sélectionné
   const dataset = scopeIsYear
     ? transactions.filter(t => new Date(t.date).getFullYear() === effYear)
     : transactions.filter(t => monthKeyFromDate(t.date) === effectiveMonthKey);
@@ -380,14 +480,12 @@ function MetricsCards({transactions, scope, toggleScope, selectedMonthKey}) {
         <div className="flex items-center gap-2">
           <Lucide icon="credit-card"/>
           <span className="uppercase text-xs opacity-60 text-white">SOLDE</span>
-          <span className="ml-auto chip-scope">
-            {chipText}
-          </span>
+          <span className="ml-auto chip-scope">{chipText}</span>
         </div>
         <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center">{formatAmount(balance)}</div>
         <button className="mt-2 btn btn-secondary text-xs px-2 py-1"
           onClick={toggleScope}
-          title={scopeIsYear ? (isCurrentMonthKey(effectiveMonthKey) ? "Revenir au mois courant" : `Voir ${formatMonthLabel(effectiveMonthKey)}`) : `Voir année ${effYear}`}
+          title={scopeIsYear ? "Afficher le mois" : `Afficher l'année ${effYear}`}
         >
           <Lucide icon="refresh-ccw"/>{scopeIsYear ? "Afficher le mois" : `Afficher l'année ${effYear}`}
         </button>
@@ -632,7 +730,7 @@ function CategoryFilter({cat, setCat, transactions}) {
         <Lucide icon="chevron-down" size={16}/>
       </button>
       {showCatMenu && (
-        <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w=[190px] max-h-60 overflow-y-auto menu-categories">
+        <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[190px] max-h-60 overflow-y-auto menu-categories">
           <button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
             onClick={()=>{ setCat("all"); setShowCatMenu(false); }}>
             <Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span>
@@ -673,7 +771,7 @@ function MonthFilter({monthFilter, setMonthFilter, months}) {
       </button>
       {open && (
         <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[220px] max-h-72 overflow-y-auto">
-          <button className="w-full text-left px-4 py-2 hover:bg:white/10 hover:bg-white/10 text-white flex items-center gap-2"
+          <button className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center gap-2"
             onClick={()=>{setMonthFilter('all'); setOpen(false);}}>
             <Lucide icon="list" size={18}/> Tous les mois
           </button>
@@ -704,9 +802,9 @@ function MonthHistoryModal({show, onClose, months, onShowMonth, onCopyMonth, onE
           <Lucide icon="history"/> Historique des mois
         </h2>
         {months.length ? (
-          <div className="space-y-2 max-h:[60vh] max-h-[60vh] overflow-y-auto">
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {months.map(m=>(
-              <div key={m.key} className="flex items-center justify-between bg:white/5 rounded-xl px-3 py-3 border border-white/10" style={{background: "rgba(255,255,255,.05)"}}>
+              <div key={m.key} className="flex items-center justify-between rounded-xl px-3 py-3 border border-white/10" style={{background: "rgba(255,255,255,.05)"}}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                     <Lucide icon="calendar-check" />
@@ -806,7 +904,7 @@ function EditMonthModal({show, onClose, sourceKey, onApply}) {
           <div className="text-white/80 text-sm">Mois source : <span className="font-semibold">{formatMonthLabel(sourceKey||'')}</span></div>
           <div>
             <label className="block text-white/70 mb-1">Nouveau mois</label>
-            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg:white/5 bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
+            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
           <button className="btn btn-secondary w-full justify-center"
             onClick={()=>{
@@ -961,12 +1059,12 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
             <label className="block text-white/70">Catégorie</label>
             <CategorySelect cat={cat} setCat={setCat} categories={CATEGORIES}/>
           </div>
-          <div>
+  <div>
             <label className="block text-white/70">Date</label>
             <input required type="date" value={date} onChange={e=>setDate(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
           <div>
-            <label className="block text:white/70 block text-white/70">Tags (séparés par ,)</label>
+            <label className="block text-white/70">Tags (séparés par ,)</label>
             <input type="text" value={tags} onChange={e=>setTags(e.target.value)} placeholder="courses,loisir..." className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
           <div>
@@ -1042,7 +1140,39 @@ function App() {
   const [editMonthOpen, setEditMonthOpen] = React.useState(false);
   const [editMonthSource, setEditMonthSource] = React.useState(null);
 
+  // Intégration Google: état de connexion
+  const [googleReady, setGoogleReady] = React.useState(false);
+
   React.useEffect(()=>{ if(showCheck){ setTimeout(()=>setShowCheck(false), 1100); } }, [showCheck]);
+
+  // Écoute login/logout pour charger Drive
+  React.useEffect(()=>{
+    async function handleSignedIn(){
+      try {
+        const remote = await loadTransactionsFromDrive();
+        if (Array.isArray(remote)) setTransactions(sortTransactions(remote));
+        setGoogleReady(true);
+      } catch(e){ console.warn("Drive load error:", e); }
+    }
+    function handleSignedOut(){ setGoogleReady(false); }
+    window.addEventListener("ONYX_SIGNED_IN", handleSignedIn);
+    window.addEventListener("ONYX_SIGNED_OUT", handleSignedOut);
+    return ()=>{
+      window.removeEventListener("ONYX_SIGNED_IN", handleSignedIn);
+      window.removeEventListener("ONYX_SIGNED_OUT", handleSignedOut);
+    };
+  }, []);
+
+  // Sauvegarde Drive (debounced) dès qu'il y a une modif et qu'on est connecté
+  const saveTimer = React.useRef(null);
+  React.useEffect(()=>{
+    if (!googleReady || !accessToken) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async ()=>{
+      try { await saveTransactionsToDrive(transactions); }
+      catch(e){ console.warn("Drive save error:", e); }
+    }, 500);
+  }, [transactions, googleReady]);
 
   function handleAddOrEdit(tx) {
     let arr = [];
@@ -1125,7 +1255,7 @@ function App() {
         onAddTx={()=>{setEditTx(null); setShowModal(true);}}
         onExport={handleExport}
         onImport={handleImport}
-        selectedMonthKey={monthFilter}   /* <<< NOUVEAU : les métriques suivent le mois vu */
+        selectedMonthKey={monthFilter}
       />
       <TransactionList
         transactions={transactions}
