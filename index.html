@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Onyx Budget V2.3</title>
+  <title>Onyx Budget V2</title>
 
-  <!-- Favicon & Apple Touch Icon -->
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
-  <link rel="shortcut icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
   <link rel="apple-touch-icon" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
   <meta name="theme-color" content="#0a0a0a"/>
 
+  <!-- Libs -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -23,118 +23,39 @@
 
   <style>
     :root{
-      --bg-start: #0a0a0a;
-      --bg-end:   #1a0033;
-      --text: #ffffff;
-
-      --primary:  #6366f1;
-      --primary-contrast: #ffffff;
-      --secondary:#00d9ff;
-      --accent:   #ff006e;
-      --success:  #10b981;
-      --danger:   #ef4444;
-
-      --glass-bg: rgba(255,255,255,0.05);
-      --glass-br: rgba(255,255,255,0.15);
-      --shadow-1: 0 4px 48px 8px rgba(99,102,241,0.12);
-      --shadow-2: 0 2px 8px rgba(0,217,255,0.12);
-
-      --scrollbar-track: rgba(26,0,51,0.5);
-      --scrollbar-thumb-from: #6366f1;
-      --scrollbar-thumb-to:   #00d9ff;
-
-      --selection-bg: #6366f1;
-      --icon-calendar: #ffffff;
+      --bg-start:#0a0a0a; --bg-end:#1a0033; --text:#fff;
+      --primary:#6366f1; --primary-contrast:#fff; --secondary:#00d9ff; --accent:#ff006e;
+      --success:#10b981; --danger:#ef4444;
+      --glass-bg:rgba(255,255,255,.05); --glass-br:rgba(255,255,255,.15);
+      --shadow-1:0 4px 48px 8px rgba(99,102,241,.12); --shadow-2:0 2px 8px rgba(0,217,255,.12);
+      --scrollbar-track:rgba(26,0,51,.5); --scrollbar-thumb-from:#6366f1; --scrollbar-thumb-to:#00d9ff;
+      --selection-bg:#6366f1; --icon-calendar:#fff;
     }
-    .theme-red {
-      --bg-start: #000000;
-      --bg-end:   #1a0006;
-
-      --primary:  #ef4444;
-      --primary-contrast: #ffffff;
-      --secondary:#dc2626;
-      --accent:   #f43f5e;
-      --success:  #16a34a;
-      --danger:   #ef4444;
-
-      --glass-bg: rgba(255,255,255,0.04);
-      --glass-br: rgba(255,255,255,0.12);
-      --shadow-1: 0 4px 48px 8px rgba(239,68,68,0.12);
-      --shadow-2: 0 2px 8px rgba(244,63,94,0.12);
-
-      --scrollbar-track: rgba(38,0,8,0.55);
-      --scrollbar-thumb-from: #ef4444;
-      --scrollbar-thumb-to:   #f43f5e;
-
-      --selection-bg: #ef4444;
-      --icon-calendar: #ffffff;
+    .theme-red{
+      --bg-start:#000; --bg-end:#1a0006; --primary:#ef4444; --secondary:#dc2626; --accent:#f43f5e;
+      --success:#16a34a; --danger:#ef4444; --glass-bg:rgba(255,255,255,.04); --glass-br:rgba(255,255,255,.12);
+      --shadow-1:0 4px 48px 8px rgba(239,68,68,.12); --shadow-2:0 2px 8px rgba(244,63,94,.12);
+      --scrollbar-track:rgba(38,0,8,.55); --scrollbar-thumb-from:#ef4444; --scrollbar-thumb-to:#f43f5e;
+      --selection-bg:#ef4444; --icon-calendar:#fff;
     }
-
-    html, body {
-      min-height: 100vh;
-      font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
-      overflow-x: auto;
-      font-size: 16px;
-      color: var(--text);
-    }
-    .glass {
-      background: var(--glass-bg);
-      border: 1.5px solid var(--glass-br);
-      box-shadow: var(--shadow-1), var(--shadow-2);
-      backdrop-filter: blur(24px);
-      border-radius: 2rem;
-    }
-    select, select option, select optgroup { background: #18181b !important; color: #fff !important; }
-    ::-webkit-scrollbar {width: 8px;background: var(--scrollbar-track);}
-    ::-webkit-scrollbar-thumb {background: linear-gradient(135deg, var(--scrollbar-thumb-from) 0, var(--scrollbar-thumb-to) 100%);border-radius: 4px;}
-    ::selection, input::selection, textarea::selection { background: var(--selection-bg) !important; color: #fff !important; }
-
-    .onyx-header { background: transparent !important; border: none !important; box-shadow: none !important; backdrop-filter: none !important; border-radius: 0 !important; }
-    .onyx-title {
-      font-family: 'Montserrat', 'Inter', Arial, sans-serif;
-      font-weight: 500;
-      font-size: 2.2rem;
-      letter-spacing: .02em;
-      background: linear-gradient(90deg,#fff 60%,#babdc4 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-fill-color: transparent;
-      line-height: 1.26;
-      display: inline-block;
-      padding-bottom: 2px;
-      margin-top: 1px;
-    }
-    @media (max-width:600px) {.onyx-title { font-size: 1.3rem;}}
-    @media (max-width: 680px) {html, body { font-size: 15px; }}
-    .menu-categories button, .menu-categories span, .menu-categories { color: #fff !important; }
-
-    .btn { display:inline-flex; align-items:center; gap:.5rem; font-weight:700; color:var(--primary-contrast); background:var(--primary);
-           padding:.5rem 1rem; border-radius: .75rem; transition: opacity .2s ease, transform .05s ease; }
-    .btn:hover{ opacity:.92 } .btn:active{ transform: translateY(1px) }
-    .btn-secondary{ background: var(--secondary); color:#fff; }
-    .btn-danger{ background: var(--danger); color:#fff; }
-    .btn-ghost{ background: rgba(255,255,255,.1); color:#fff;}
-    .chip-scope{ background: rgba(255,255,255,.1); color:#fff; font-size:10px; padding:.15rem .5rem; border-radius: 999px; }
-
-    [data-lucide="calendar"],
-    [data-lucide="calendar-days"],
-    [data-lucide="calendar-check"],
-    [data-lucide="calendar-range"] { color: var(--icon-calendar) !important; }
-
-    .badge-anim-pop { animation: badgePop 0.72s cubic-bezier(.65,-0.3,.63,1.36); }
-    @keyframes badgePop { 0% { transform: scale(0.5) rotate(-20deg); opacity:0; } 60% { transform: scale(1.15) rotate(8deg); opacity:1; } 90% { transform: scale(1) rotate(-2deg);} 100% { transform: scale(1) rotate(0);} }
-    .check-anim { animation: checkMark 1.2s cubic-bezier(.57,2.2,.34,.97); }
-    @keyframes checkMark { 0%{ transform:scale(0) rotate(-40deg);} 50%{ transform:scale(1.2) rotate(8deg);} 75%{ transform:scale(.92) rotate(-4deg);} 100%{ transform:scale(1) rotate(0);} }
-
-    .theme-toggle {
-      position: fixed; top: 12px; left: 12px; z-index: 60; width: 42px; height: 42px; border-radius: 999px;
-      display:flex; align-items:center; justify-content:center;
-      background: var(--glass-bg); border: 1.5px solid var(--glass-br); box-shadow: var(--shadow-1); backdrop-filter: blur(12px); color:#fff;
-      cursor: pointer;
-    }
-    .theme-toggle:hover { outline: 2px solid rgba(255,255,255,.12); }
+    html,body{min-height:100vh;font-family:'Inter','Montserrat',Arial,sans-serif;background:linear-gradient(135deg,var(--bg-start) 0%,var(--bg-end) 100%);overflow-x:auto;color:var(--text)}
+    .glass{background:var(--glass-bg);border:1.5px solid var(--glass-br);box-shadow:var(--shadow-1),var(--shadow-2);backdrop-filter:blur(24px);border-radius:2rem}
+    select,select option,select optgroup{background:#18181b!important;color:#fff!important}
+    ::-webkit-scrollbar{width:8px;background:var(--scrollbar-track)}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,var(--scrollbar-thumb-from),var(--scrollbar-thumb-to));border-radius:4px}
+    ::selection,input::selection,textarea::selection{background:var(--selection-bg)!important;color:#fff!important}
+    .onyx-header{background:transparent;border:none;box-shadow:none;backdrop-filter:none;border-radius:0}
+    .onyx-title{font-family:'Montserrat','Inter',Arial,sans-serif;font-weight:500;font-size:2.2rem;letter-spacing:.02em;background:linear-gradient(90deg,#fff 60%,#babdc4 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.26;display:inline-block;padding-bottom:2px;margin-top:1px}
+    @media(max-width:600px){.onyx-title{font-size:1.3rem}} @media(max-width:680px){html,body{font-size:15px}}
+    .menu-categories button,.menu-categories span,.menu-categories{color:#fff!important}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;font-weight:700;color:var(--primary-contrast);background:var(--primary);padding:.5rem 1rem;border-radius:.75rem;transition:opacity .2s ease,transform .05s ease}
+    .btn:hover{opacity:.92}.btn:active{transform:translateY(1px)} .btn-secondary{background:var(--secondary);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}.btn-ghost{background:rgba(255,255,255,.1);color:#fff}
+    .chip-scope{background:rgba(255,255,255,.1);color:#fff;font-size:10px;padding:.15rem .5rem;border-radius:999px}
+    [data-lucide="calendar"],[data-lucide="calendar-days"],[data-lucide="calendar-check"],[data-lucide="calendar-range"]{color:var(--icon-calendar)!important}
+    .badge-anim-pop{animation:badgePop .72s cubic-bezier(.65,-0.3,.63,1.36)}@keyframes badgePop{0%{transform:scale(.5) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(8deg);opacity:1}90%{transform:scale(1) rotate(-2deg)}100%{transform:scale(1) rotate(0)}}
+    .check-anim{animation:checkMark 1.2s cubic-bezier(.57,2.2,.34,.97)}@keyframes checkMark{0%{transform:scale(0) rotate(-40deg)}50%{transform:scale(1.2) rotate(8deg)}75%{transform:scale(.92) rotate(-4deg)}100%{transform:scale(1) rotate(0)}}
+    .theme-toggle{position:fixed;top:12px;left:12px;z-index:60;width:42px;height:42px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--glass-bg);border:1.5px solid var(--glass-br);box-shadow:var(--shadow-1);backdrop-filter:blur(12px);color:#fff;cursor:pointer}
+    .theme-toggle:hover{outline:2px solid rgba(255,255,255,.12)}
   </style>
 </head>
 <body>
@@ -153,35 +74,34 @@
 
   <div id="root"></div>
 
+  <!-- Init thème + branchement boutons + init Google au chargement -->
   <script>
-    /* ======= Thème: lecture au démarrage + binding immédiat ======= */
     (function initTheme(){
       const saved = localStorage.getItem('onyx_theme');
       if(saved==='red'){ document.documentElement.classList.add('theme-red'); }
       if (window.lucide) window.lucide.createIcons();
-
       function toggleTheme(){
         const el = document.documentElement;
         const isRed = el.classList.toggle('theme-red');
         localStorage.setItem('onyx_theme', isRed ? 'red' : 'default');
         if (window.lucide) window.lucide.createIcons();
       }
-
-      var btn = document.getElementById('themeBtn');
-      if (btn) {
-        btn.addEventListener('click', toggleTheme);
-      } else {
-        const iv = setInterval(()=>{
-          btn = document.getElementById('themeBtn');
-          if (btn) { btn.addEventListener('click', toggleTheme); clearInterval(iv); }
-        }, 50);
-        setTimeout(()=>clearInterval(iv), 2000);
-      }
+      let btn = document.getElementById('themeBtn');
+      if (btn) btn.addEventListener('click', toggleTheme);
     })();
 
-    // Branche les boutons Google après chargement
+    // Branche les boutons et lance l'auto-login persistant
     window.addEventListener("load", function(){
+      // Montre immédiatement l'état "connecté" si on l'était avant (UX fluide)
+      if (localStorage.getItem("onyx_google_authed") === "1") {
+        const inBtn = document.getElementById("googleSignIn");
+        const outBtn = document.getElementById("googleSignOut");
+        if (inBtn) inBtn.style.display = "none";
+        if (outBtn) outBtn.style.display = "inline-flex";
+      }
+
       if (typeof initGoogleAuth === "function") initGoogleAuth();
+
       const btnIn = document.getElementById("googleSignIn");
       const btnOut = document.getElementById("googleSignOut");
       if(btnIn) btnIn.addEventListener("click", function(){ if (window.signInWithGoogle) window.signInWithGoogle(); });
@@ -189,1141 +109,279 @@
     });
   </script>
 
-<script type="text/babel">
-  /* ==================== Google Auth + Drive (AppData) ==================== */
-  const GOOGLE = {
-    CLIENT_ID: "910313633485-js3ldfefrgtlc056i5t4go6r3b0ni0il.apps.googleusercontent.com",
-    SCOPES: "https://www.googleapis.com/auth/drive.appdata openid email profile"
-  };
-  
-  let accessToken = null;
-  let tokenClient = null;
-  let refreshTimer = null;
-  let accessTokenExpiry = 0; // timestamp ms
-  
-  function setUiSignedIn(signedIn){
-    const inBtn = document.getElementById("googleSignIn");
-    const outBtn = document.getElementById("googleSignOut");
-    if (inBtn) inBtn.style.display = signedIn ? "none" : "inline-flex";
-    if (outBtn) outBtn.style.display = signedIn ? "inline-flex" : "none";
-  }
-  
-  function scheduleSilentRefresh(expiresInSec=3600){
-    if (refreshTimer) clearTimeout(refreshTimer);
-    // On renouvelle 60s avant l’expiration (min 30s pour être safe)
-    const delayMs = Math.max((expiresInSec - 60), 30) * 1000;
-    refreshTimer = setTimeout(()=>{
-      // Silent renewal: pas de pop-up si la session Google est toujours active
-      tokenClient?.requestAccessToken({ prompt: "" });
-    }, delayMs);
-  }
-  
-  function initGoogleAuth() {
-    if (!window.google || !google.accounts || !google.accounts.oauth2) return;
-    tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: GOOGLE.CLIENT_ID,
-      scope: GOOGLE.SCOPES,
-      prompt: "", // autorise les requêtes "silencieuses" après consentement initial
-      callback: (resp) => {
-        // Quand on reçoit un token (après clic OU renouvellement silencieux)
-        accessToken = resp.access_token;
-        const expires = Number(resp.expires_in || 3600);
-        accessTokenExpiry = Date.now() + expires*1000;
-  
-        localStorage.setItem("onyx_google_authed", "1"); // persiste l’état "connecté"
-        setUiSignedIn(true);
-        window.dispatchEvent(new Event("ONYX_SIGNED_IN")); // charge depuis Drive la 1ère fois
-  
-        scheduleSilentRefresh(expires);
-      }
-    });
-  
-    // Tentative de reconnexion silencieuse AU CHARGEMENT si on était déjà connecté
-    if (localStorage.getItem("onyx_google_authed") === "1") {
-      // token sans prompt → pas de fenêtrage si la session Google est valide
-      tokenClient.requestAccessToken({ prompt: "" });
+  <script type="text/babel">
+/* ==================== Google Auth + Drive (persistant) ==================== */
+const GOOGLE = {
+  CLIENT_ID: "910313633485-js3ldfefrgtlc056i5t4go6r3b0ni0il.apps.googleusercontent.com",
+  SCOPES: "https://www.googleapis.com/auth/drive.appdata openid email profile"
+};
+
+let accessToken = null;
+let tokenClient = null;
+let refreshTimer = null;
+let accessTokenExpiry = 0; // timestamp ms
+
+function setUiSignedIn(signedIn){
+  const inBtn = document.getElementById("googleSignIn");
+  const outBtn = document.getElementById("googleSignOut");
+  if (inBtn) inBtn.style.display = signedIn ? "none" : "inline-flex";
+  if (outBtn) outBtn.style.display = signedIn ? "inline-flex" : "none";
+}
+
+function scheduleSilentRefresh(expiresInSec=3600){
+  if (refreshTimer) clearTimeout(refreshTimer);
+  const delayMs = Math.max((expiresInSec - 60), 30) * 1000; // refresh 60s avant
+  refreshTimer = setTimeout(()=>{
+    tokenClient?.requestAccessToken({ prompt: "" }); // pas de popup
+  }, delayMs);
+}
+
+function initGoogleAuth() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE.CLIENT_ID,
+    scope: GOOGLE.SCOPES,
+    prompt: "", // permet les refresh silencieux
+    callback: (resp) => {
+      // Succès (connexion initiale ou refresh silencieux)
+      accessToken = resp.access_token;
+      const expires = Number(resp.expires_in || 3600);
+      accessTokenExpiry = Date.now() + expires*1000;
+
+      // Persiste l'état connecté
+      localStorage.setItem("onyx_google_authed", "1");
+      setUiSignedIn(true);
+
+      // Notifie l'app au premier jeton (chargera Drive si besoin)
+      window.dispatchEvent(new Event("ONYX_SIGNED_IN"));
+
+      scheduleSilentRefresh(expires);
     }
-  
-    // Bonus: si l’onglet redevient visible et qu’on est proche de l’expiration, on renouvelle
-    document.addEventListener("visibilitychange", ()=>{
-      if (document.visibilityState === "visible" && accessToken) {
-        const remaining = accessTokenExpiry - Date.now();
-        if (remaining < 90*1000) { // < 90s restants → on rafraîchit en silence
-          tokenClient?.requestAccessToken({ prompt: "" });
-        }
-      }
-    });
-  }
-  
-  function signInWithGoogle(){
-    // 1er consentement uniquement → popup
-    tokenClient?.requestAccessToken({ prompt: "consent" });
-  }
-  
-  function signOutGoogle(){
-    try { accessToken && google?.accounts?.oauth2?.revoke?.(accessToken, ()=>{}); } catch {}
-    accessToken = null;
-    accessTokenExpiry = 0;
-    if (refreshTimer) clearTimeout(refreshTimer);
-    localStorage.removeItem("onyx_google_authed");
-    setUiSignedIn(false);
-    window.dispatchEvent(new Event("ONYX_SIGNED_OUT"));
-  }
-  
-  window.signInWithGoogle = signInWithGoogle;
-  window.signOutGoogle = signOutGoogle;
-  
-  async function driveRequest(url, opts = {}) {
-    if (!accessToken) throw new Error("Non authentifié");
-    const headers = Object.assign({}, opts.headers || {}, { Authorization: `Bearer ${accessToken}` });
-    const res = await fetch(url, { ...opts, headers });
-    if (!res.ok) throw new Error(await res.text());
-    return res;
-  }
-  
-  async function ensureAppDataFileId() {
-    const listRes = await driveRequest(
-      "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name%20%3D%20%27onyx_transactions.json%27"
-    );
-    const data = await listRes.json();
-    if (data.files && data.files.length) return data.files[0].id;
-  
-    const boundary = "-------314159265358979323846";
-    const delimiter = `--${boundary}\r\n`;
-    const closeDelim = `--${boundary}--`;
-  
-    const metadata = { name: "onyx_transactions.json", parents: ["appDataFolder"] };
-    const body =
-      delimiter +
-      "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-      JSON.stringify(metadata) + "\r\n" +
-      delimiter +
-      "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-      "[]\r\n" +
-      closeDelim;
-  
-    const createRes = await driveRequest(
-      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
-      { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body }
-    );
-    const created = await createRes.json();
-    return created.id;
-  }
-  async function loadTransactionsFromDrive() {
-    const fileId = await ensureAppDataFileId();
-    const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
-    return await res.json();
-  }
-  async function saveTransactionsToDrive(transactions) {
-    const fileId = await ensureAppDataFileId();
-    await driveRequest(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(transactions) }
-    );
-  }
-
-/* ==================== App ==================== */
-/* Utilitaire Lucide */
-function Lucide(props) {
-  React.useEffect(()=>{ if(window.lucide) window.lucide.createIcons(); },[props.icon]);
-  return <i data-lucide={props.icon} className={props.className} style={{display:"inline-block",verticalAlign:"middle",color:props.color||"inherit"}}></i>
-}
-
-const CATEGORIES = [
-  {icon:"wallet", name:"Revenus", color:"#10b981"},
-  {icon:"shopping-cart", name:"Alimentation", color:"#00d9ff"},
-  {icon:"utensils", name:"Restaurants", color:"#ffb700"},
-  {icon:"coffee", name:"Cafés / Bars", color:"#ff006e"},
-  {icon:"home", name:"Logement", color:"#6366f1"},
-  {icon:"flame", name:"Énergie / Gaz", color:"#6366f1"},
-  {icon:"droplet", name:"Eau", color:"#0ea5e9"},
-  {icon:"wifi", name:"Internet / Télécom", color:"#6366f1"},
-  {icon:"phone", name:"Téléphone", color:"#6366f1"},
-  {icon:"car", name:"Voiture", color:"#2563eb"},
-  {icon:"bus", name:"Transports en commun", color:"#22d3ee"},
-  {icon:"bicycle", name:"Vélo / Mobilité douce", color:"#06b6d4"},
-  {icon:"gas-pump", name:"Carburant", color:"#fdba74"},
-  {icon:"plane", name:"Voyages", color:"#38bdf8"},
-  {icon:"train", name:"Train", color:"#3b82f6"},
-  {icon:"shopping-bag", name:"Shopping", color:"#f472b6"},
-  {icon:"gift", name:"Cadeaux", color:"#ef4444"},
-  {icon:"banknote", name:"Impôts / Taxes", color:"#a21caf"},
-  {icon:"heart-pulse", name:"Santé", color:"#ef4444"},
-  {icon:"user", name:"Famille", color:"#fb7185"},
-  {icon:"users", name:"Social", color:"#00d9ff"},
-  {icon:"book", name:"Éducation", color:"#818cf8"},
-  {icon:"briefcase", name:"Travail", color:"#6366f1"},
-  {icon:"tv", name:"Abonnements", color:"#6366f1"},
-  {icon:"music", name:"Divertissement / Musique", color:"#a3e635"},
-  {icon:"gamepad-2", name:"Jeux", color:"#0ea5e9"},
-  {icon:"star", name:"Bonus", color:"#facc15"},
-  {icon:"hammer", name:"Bricolage", color:"#eab308"},
-  {icon:"paw-print", name:"Animaux", color:"#10b981"},
-  {icon:"palette", name:"Culture", color:"#c026d3"},
-  {icon:"film", name:"Cinéma / Spectacles", color:"#f59e42"},
-  {icon:"trophy", name:"Sports", color:"#f43f5e"},
-  {icon:"smartphone", name:"Électronique", color:"#0ea5e9"},
-  {icon:"credit-card", name:"Crédit", color:"#6366f1"},
-  {icon:"umbrella", name:"Assurance", color:"#818cf8"},
-  {icon:"piggy-bank", name:"Épargne", color:"#10b981"},
-  {icon:"repeat", name:"Dépenses récurrentes", color:"#6366f1"},
-  {icon:"building-2", name:"Charges de copropriété", color:"#f59e42"},
-  {icon:"flower", name:"Jardin / Plantes", color:"#10b981"},
-  {icon:"truck", name:"Livraison", color:"#fbbf24"},
-  {icon:"scissors", name:"Beauté / Coiffeur", color:"#f472b6"},
-  {icon:"baby", name:"Enfants", color:"#a3e635"},
-  {icon:"bug", name:"Imprévus", color:"#38bdf8"},
-  {icon:"smile", name:"Autre", color:"#d1d5db"}
-];
-
-const formatAmount = (n) => n.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
-const formatDate = (d) => new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
-const sum = (arr, fn) => arr.reduce((acc,cur)=>acc+fn(cur),0);
-const randomId = () => Math.random().toString(36).slice(2,10);
-
-function normalizeString(str) {
-  return (str||"").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-function normalizeUrl(u) {
-  if (!u) return "";
-  const s = u.trim();
-  if (!s) return "";
-  if (!/^https?:\/\//i.test(s)) return "https://" + s;
-  return s;
-}
-
-function sortTransactions(arr) {
-  if (!Array.isArray(arr)) return [];
-  const income = arr.filter(t => t.type === "income").sort((a,b)=>b.amount - a.amount);
-  const expense = arr.filter(t => t.type === "expense").sort((a,b)=>b.amount - a.amount);
-  return [...income, ...expense];
-}
-
-/* ---------- Mois / Année utils ---------- */
-function monthKeyFromDate(d) {
-  const dt = new Date(d);
-  const y = dt.getFullYear();
-  const m = String(dt.getMonth()+1).padStart(2,'0');
-  return `${y}-${m}`;
-}
-function formatMonthLabel(key) {
-  const [y,m] = key.split('-').map(n=>+n);
-  const dt = new Date(y, m-1, 1);
-  return dt.toLocaleDateString('fr-FR', { month:'long', year:'numeric' });
-}
-function getMonthsWithData(transactions) {
-  const map = new Map();
-  transactions.forEach(t=>{
-    const key = monthKeyFromDate(t.date);
-    if(!map.has(key)) map.set(key, []);
-    map.get(key).push(t);
-  });
-  const entries = Array.from(map.entries()).map(([key, list])=>{
-    const totalIn = sum(list.filter(t=>t.type==="income"), t=>+t.amount);
-    const totalOut = sum(list.filter(t=>t.type==="expense"), t=>+t.amount);
-    return { key, label: formatMonthLabel(key), count: list.length, totalIn, totalOut };
-  });
-  return entries.sort((a,b)=> a.key < b.key ? 1 : -1);
-}
-function addMonthsClamped(date, n) {
-  const d = new Date(date);
-  const y = d.getFullYear();
-  const m = d.getMonth();
-  const targetDays = new Date(y, m + n + 1, 0).getDate();
-  const day = Math.min(d.getDate(), targetDays);
-  return new Date(y, m + n, day, d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
-}
-function setDateToMonth(date, targetYear, targetMonthIndex0) {
-  const d = new Date(date);
-  const daysInTarget = new Date(targetYear, targetMonthIndex0 + 1, 0).getDate();
-  const day = Math.min(d.getDate(), daysInTarget);
-  return new Date(targetYear, targetMonthIndex0, day, d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
-}
-function isCurrentMonthKey(key){
-  const now = new Date();
-  const current = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  return key === current;
-}
-
-/* ---------- BADGE ---------- */
-function BadgeAchievement({show, type}) {
-  if(!show) return null;
-  let label, icon;
-  if(type==="first_income") {label="Premier revenu !";icon="wallet";}
-  else if(type==="first_saving") {label="Première épargne !";icon="piggy-bank";}
-  else {return null;}
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-      <div className="badge-anim-pop flex flex-col items-center px-6 py-4 rounded-3xl shadow-2xl border-2 border-white/10 glass"
-        style={{background:"linear-gradient(135deg,rgba(20,20,36,0.97),rgba(10,0,32,0.85))"}}
-      >
-        <Lucide icon={icon} />
-        <span className="mt-3 text-lg font-bold text-white">{label}</span>
-        <span className="mt-1 px-3 py-1 rounded-lg text-xs" style={{background:"rgba(255,255,255,.08)"}}>{type==="first_income" ? "Bravo pour ton premier revenu !" : "Épargner, c'est gagner."}</span>
-      </div>
-    </div>
-  );
-}
-function SuccessCheckmark({show}) {
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      <div className="check-anim bg-white/90 rounded-full shadow-2xl flex items-center justify-center" style={{width:96,height:96}}>
-        <svg width="64" height="64" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="25" fill="none" stroke="var(--success)" strokeWidth="5"/>
-          <path fill="none" stroke="var(--success)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16"/>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-/* ------------- HEADER --------------- */
-function Header() {
-  return (
-    <header className="onyx-header flex items-center px-14 py-5 mb-4" style={{zIndex:20, position:"relative", minHeight:"80px"}}>
-      <div className="flex items-center gap-5">
-        <img src="https://i.ibb.co/5WMnx7y6/8ba349756916.png"
-          alt="Onyx Budget"
-          className="h-[99px] w-[99px]"
-          style={{objectFit:"contain", background:"none", border:"none", boxShadow:"none"}}/>
-        <span className="onyx-title">Onyx Budget V2</span>
-      </div>
-    </header>
-  );
-}
-
-/* ----------- METRICS CARDS (sensibles au mois vu) ----------- */
-function MetricsCards({transactions, scope, toggleScope, selectedMonthKey}) {
-  const now = new Date();
-  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const effectiveMonthKey = selectedMonthKey && selectedMonthKey !== 'all' ? selectedMonthKey : currentMonthKey;
-  const [effYear] = effectiveMonthKey.split('-').map(Number);
-  const scopeIsYear = scope === 'year';
-
-  const dataset = scopeIsYear
-    ? transactions.filter(t => new Date(t.date).getFullYear() === effYear)
-    : transactions.filter(t => monthKeyFromDate(t.date) === effectiveMonthKey);
-
-  const totalIncome = sum(dataset.filter(t=>t.type==="income"), t=>+t.amount);
-  const totalExpense = sum(dataset.filter(t=>t.type==="expense"), t=>+t.amount);
-  const savings = sum(
-    dataset.filter(t=> t.category && normalizeString(t.category.name) === normalizeString("Épargne")),
-    t=>+t.amount
-  );
-  const balance = totalIncome - totalExpense;
-
-  const chipText = scopeIsYear
-    ? `Année ${effYear}${selectedMonthKey!=='all' && !isCurrentMonthKey(effectiveMonthKey) ? " (selon vue)" : ""}`
-    : (isCurrentMonthKey(effectiveMonthKey) ? "Mois courant" : formatMonthLabel(effectiveMonthKey));
-
-  return (
-    <div className="grid grid-cols-4 gap-4 my-4 overflow-x-auto min-w-[680px]">
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="credit-card"/>
-          <span className="uppercase text-xs opacity-60 text-white">SOLDE</span>
-          <span className="ml-auto chip-scope">{chipText}</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center">{formatAmount(balance)}</div>
-        <button className="mt-2 btn btn-secondary text-xs px-2 py-1"
-          onClick={toggleScope}
-          title={scopeIsYear ? "Afficher le mois" : `Afficher l'année ${effYear}`}
-        >
-          <Lucide icon="refresh-ccw"/>{scopeIsYear ? "Afficher le mois" : `Afficher l'année ${effYear}`}
-        </button>
-      </div>
-
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="download" />
-          <span className="uppercase text-xs opacity-60">REVENUS</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(totalIncome)}</div>
-      </div>
-
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="upload"/>
-          <span className="uppercase text-xs opacity-60">DÉPENSES</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(totalExpense)}</div>
-      </div>
-
-      <div className="glass p-4 md:p-6 shadow-xl">
-        <div className="flex items-center gap-2">
-          <Lucide icon="piggy-bank"/>
-          <span className="uppercase text-xs opacity-60">ÉCONOMIES</span>
-        </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(savings)}</div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------- GRAPHIQUE ----------- */
-function getMonthDays(startDate, transactions) {
-  const txSorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let firstDate = startDate;
-  if (txSorted.length) firstDate = new Date(txSorted[0].date);
-  const year = firstDate.getFullYear();
-  const month = firstDate.getMonth();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const days = [];
-  for(let i=1; i<=daysInMonth; i++) days.push(new Date(year, month, i));
-  return days;
-}
-function getDailyBalances(transactions) {
-  if (!transactions.length) return {labels:[], data:[]};
-  const monthDays = getMonthDays(new Date(), transactions);
-  const sorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let balances = []; let current = 0; let idx = 0;
-  monthDays.forEach(day=>{
-    while (idx<sorted.length && (new Date(sorted[idx].date)).toDateString() === day.toDateString()) {
-      current += (sorted[idx].type==="income"?+sorted[idx].amount:-+sorted[idx].amount);
-      idx++;
-    }
-    balances.push(current);
-  });
-  return {
-    labels: monthDays.map(d=>`${d.getDate().toString().padStart(2,'0')} ${d.toLocaleString("fr-FR",{month:"short"})}`),
-    data: balances,
-    days: monthDays
-  };
-}
-function PremiumChart({transactions}) {
-  const chartRef = React.useRef();
-  const {labels, data} = getDailyBalances(transactions);
-  const totalRevenus = sum(transactions.filter(t=>t.type==="income"), t=>+t.amount);
-  const [hoverPoint, setHoverPoint] = React.useState(null);
-  React.useEffect(()=>{
-    if(chartRef.current){
-      const ctx = chartRef.current.getContext("2d");
-      if(window.myChart) window.myChart.destroy();
-      let gradient = ctx.createLinearGradient(0,0,0,200);
-      gradient.addColorStop(0, "rgba(255,255,255,0.25)");
-      gradient.addColorStop(1, "rgba(255,255,255,0.05)");
-      let gradientLine = ctx.createLinearGradient(0,0,chartRef.current.width,0);
-      gradientLine.addColorStop(0,"#ffffff");
-      gradientLine.addColorStop(1,"#dddddd");
-      window.myChart = new window.Chart(ctx, {
-        type:"line",
-        data:{
-          labels: labels.length ? labels : ["—"],
-          datasets: [{
-            label:"Solde",
-            data: data.length ? data : [0],
-            fill: true,
-            borderWidth: 3,
-            borderColor: gradientLine,
-            backgroundColor: gradient,
-            pointRadius: data.length>1 ? 4 : 10,
-            pointBackgroundColor: "#ffffff",
-            pointBorderWidth: 2,
-            pointBorderColor: "#00000033",
-            pointHoverRadius: 12,
-            tension: 0.44,
-          }]
-        },
-        options:{
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            tooltip: {
-              enabled: false,
-              external: function(context) {
-                const {chart, tooltip} = context;
-                if (!chart) return;
-                if(tooltip && tooltip.dataPoints && tooltip.dataPoints.length) {
-                  setHoverPoint({
-                    index: tooltip.dataPoints[0].dataIndex,
-                    value: tooltip.dataPoints[0].parsed.y,
-                    label: tooltip.dataPoints[0].label
-                  });
-                } else {
-                  setHoverPoint(null);
-                }
-              }
-            },
-          },
-          elements: { line: { borderJoinStyle:"round", borderCapStyle:"round" } },
-          scales:{
-            y:{
-              min: 0,
-              max: totalRevenus > 0 ? Math.ceil(totalRevenus/10)*10 : undefined,
-              ticks:{ color:"#fff", font:{size:15, weight:700}, callback: (v)=>formatAmount(v) },
-              grid:{color:"rgba(255,255,255,0.10)", lineWidth:1.2},
-              border:{color:"rgba(255,255,255,0.17)"},
-              beginAtZero:true,
-            },
-            x:{
-              ticks:{color:"#fff", font:{size:14}},
-              grid:{color:"rgba(255,255,255,0.07)",drawOnChartArea:false},
-              border:{color:"rgba(255,255,255,0.17)"},
-              autoSkip: false, maxRotation: 0, minRotation: 0
-            }
-          },
-          interaction: { mode: 'nearest', intersect: true },
-          animation: {duration:900, easing:'easeOutQuint'}
-        }
-      });
-    }
-    return ()=>{ if(window.myChart) window.myChart.destroy(); }
-  },[transactions]);
-  return (
-    <div className="relative" style={{minHeight:220}}>
-      <canvas ref={chartRef} height={110}></canvas>
-      {hoverPoint && (
-        <div className="absolute z-20 pointer-events-none" style={{left: `calc(${(hoverPoint.index/(labels.length-1||1))*100}% - 48px)`, top: 15, minWidth: '88px'}}>
-          <div className="rounded-2xl bg-black/50 border border-white/20 shadow-lg px-4 py-2 text-white text-center text-base font-bold transition">
-            {formatAmount(hoverPoint.value)}
-            <div className="text-xs text-white/70">{hoverPoint.label}</div>
-          </div>
-        </div>
-      )}
-      {(!transactions || transactions.length===0) &&
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/40 text-xl font-bold pointer-events-none select-none" style={{letterSpacing:1}}>
-          <Lucide icon="moon" />
-          <span className="mt-3">Aucune donnée</span>
-        </div>
-      }
-    </div>
-  );
-}
-
-/* ------- DASHBOARD ------- */
-function Dashboard({transactions, metricsScope, toggleMetricsScope, onAddTx, onExport, onImport, selectedMonthKey}) {
-  return (
-    <div>
-      <MetricsCards
-        transactions={transactions}
-        scope={metricsScope}
-        toggleScope={toggleMetricsScope}
-        selectedMonthKey={selectedMonthKey}
-      />
-      <div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px', maxWidth:'900px'}}>
-        <div className="p-4" style={{minWidth: '600px', maxWidth: '900px'}}>
-          <div className="font-semibold mb-2 text-white/80">Solde global (historique)</div>
-          <PremiumChart transactions={transactions}/>
-        </div>
-      </div>
-      <div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}>
-        <button className="btn" onClick={onAddTx}><Lucide icon="plus-circle"/> Ajouter transaction</button>
-        <button className="btn" onClick={onExport}><Lucide icon="download" /> Exporter JSON</button>
-        <label className="btn cursor-pointer">
-          <Lucide icon="upload" /> Importer JSON
-          <input type="file" accept=".json" className="hidden" onChange={onImport}/>
-        </label>
-      </div>
-    </div>
-  );
-}
-
-/* ------- CategorySelect / Filter / List / Modals ------- */
-function CategorySelect({cat, setCat, categories}) {
-  const [showCatMenu, setShowCatMenu] = React.useState(false);
-  const ref = React.useRef();
-  React.useEffect(()=>{
-    function handler(e) { if (!ref.current?.contains(e.target)) setShowCatMenu(false); }
-    if (showCatMenu) window.addEventListener("mousedown", handler);
-    return ()=>window.removeEventListener("mousedown", handler);
-  }, [showCatMenu]);
-  return (
-    <div className="relative" ref={ref}>
-      <button type="button" className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10"
-        onClick={()=>setShowCatMenu(x=>!x)} tabIndex={-1}>
-        <span className="flex items-center gap-2">
-          <Lucide icon={categories.find(c=>c.name===cat)?.icon || "circle"} color={categories.find(c=>c.name===cat)?.color || "#fff"} size={20}/>
-          {cat}
-        </span>
-        <Lucide icon="chevron-down" size={18}/>
-      </button>
-      {showCatMenu && (
-        <div className="absolute z-50 w-full bg-black rounded-xl mt-1 border border-white/10 max-h-60 overflow-y-auto menu-categories">
-          {categories.map(c=>(
-            <button type="button" key={c.name} className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
-              onClick={()=>{ setCat(c.name); setShowCatMenu(false); }}>
-              <Lucide icon={c.icon} color={c.color} size={20}/>
-              <span className="text-white">{c.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CategoryFilter({cat, setCat, transactions}) {
-  const [showCatMenu, setShowCatMenu] = React.useState(false);
-  const ref = React.useRef();
-  React.useEffect(()=>{
-    function handler(e) { if (!ref.current?.contains(e.target)) setShowCatMenu(false); }
-    if (showCatMenu) window.addEventListener("mousedown", handler);
-    return ()=>window.removeEventListener("mousedown", handler);
-  }, [showCatMenu]);
-  const uniqueCats = Array.from(new Set(transactions.map(t=>t.category.name)));
-  return (
-    <div className="relative" ref={ref}>
-      <button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
-        onClick={()=>setShowCatMenu(x=>!x)}>
-        {cat==="all"
-          ? <><Lucide icon="list" size={18}/> Toutes catégories</>
-          : <><Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon || "circle"} color={transactions.find(t=>t.category.name===cat)?.category.color || "#fff"} size={18}/>{cat}</>
-        }
-        <Lucide icon="chevron-down" size={16}/>
-      </button>
-      {showCatMenu && (
-        <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[190px] max-h-60 overflow-y-auto menu-categories">
-          <button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
-            onClick={()=>{ setCat("all"); setShowCatMenu(false); }}>
-            <Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span>
-          </button>
-          {uniqueCats.map(c=>{
-            const catObj = transactions.find(t=>t.category.name===c)?.category;
-            return (
-              <button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
-                key={c} onClick={()=>{ setCat(c); setShowCatMenu(false); }}>
-                <Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/>
-                <span className="text-white">{c}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* --------- Month Filter UI --------- */
-function MonthFilter({monthFilter, setMonthFilter, months}) {
-  const [open, setOpen] = React.useState(false);
-  const ref = React.useRef();
-  React.useEffect(()=>{
-    function handler(e) { if (!ref.current?.contains(e.target)) setOpen(false); }
-    if (open) window.addEventListener("mousedown", handler);
-    return ()=>window.removeEventListener("mousedown", handler);
-  },[open]);
-
-  return (
-    <div className="relative" ref={ref}>
-      <button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
-        onClick={()=>setOpen(v=>!v)}>
-        <Lucide icon="calendar" size={18}/>
-        {monthFilter==='all' ? 'Tous les mois' : formatMonthLabel(monthFilter)}
-        <Lucide icon="chevron-down" size={16}/>
-      </button>
-      {open && (
-        <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[220px] max-h-72 overflow-y-auto">
-          <button className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center gap-2"
-            onClick={()=>{setMonthFilter('all'); setOpen(false);}}>
-            <Lucide icon="list" size={18}/> Tous les mois
-          </button>
-          {months.map(m=>(
-            <button key={m.key} className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center justify-between"
-              onClick={()=>{setMonthFilter(m.key); setOpen(false);}}>
-              <span className="flex items-center gap-2">
-                <Lucide icon="calendar-days" size={18}/>
-                {m.label}
-              </span>
-              <span className="text-xs text-white/60">{m.count}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* --------- Historique des mois Modal --------- */
-function MonthHistoryModal({show, onClose, months, onShowMonth, onCopyMonth, onEditMonth, onDeleteMonth}) {
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="glass max-w-2xl w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-          <Lucide icon="history"/> Historique des mois
-        </h2>
-        {months.length ? (
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-            {months.map(m=>(
-              <div key={m.key} className="flex items-center justify-between rounded-xl px-3 py-3 border border-white/10" style={{background: "rgba(255,255,255,.05)"}}>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-                    <Lucide icon="calendar-check" />
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold">{m.label}</div>
-                    <div className="text-white/60 text-xs">{m.count} éléments — {formatAmount(m.totalIn - m.totalOut)}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap justify-end">
-                  <button className="btn btn-secondary" onClick={()=>{onShowMonth(m.key); onClose();}} title="Afficher dans le tableau">
-                    <Lucide icon="eye"/><span>Afficher</span>
-                  </button>
-                  <button className="btn" onClick={()=>onCopyMonth(m.key)} title="Copier toutes les transactions vers le mois suivant">
-                    <Lucide icon="copy"/><span>Copier → mois suivant</span>
-                  </button>
-                  <button className="btn btn-ghost" onClick={()=>onEditMonth(m.key)} title="Modifier la date du mois">
-                    <Lucide icon="calendar-range"/><span>Modifier date</span>
-                  </button>
-                  <button className="btn btn-danger" onClick={()=>onDeleteMonth(m.key)} title="Supprimer toutes les transactions de ce mois">
-                    <Lucide icon="trash-2"/><span>Supprimer</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-white/70">Aucun mois trouvé.</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* --------- Duplication Modal --------- */
-function DuplicationModal({show, onClose, months, defaultSourceKey, onDuplicate}) {
-  const [source, setSource] = React.useState(defaultSourceKey);
-  const [target, setTarget] = React.useState(()=>{
-    const base = source || monthKeyFromDate(new Date());
-    const [y,m] = base.split('-').map(Number);
-    const d = new Date(y, m-1, 1);
-    const next = addMonthsClamped(d, 1);
-    const ym = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;
-    return ym;
-  });
-  React.useEffect(()=>{ setSource(defaultSourceKey); },[defaultSourceKey]);
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="glass max-w-md w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Lucide icon="copy"/> Dupliquer des transactions
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-white/70 mb-1">Mois source</label>
-            <select value={source} onChange={e=>setSource(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10">
-              {months.map(m=>(
-                <option key={m.key} value={m.key}>{m.label} — {m.count} éléments</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-white/70 mb-1">Mois cible</label>
-            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-            <p className="text-xs text-white/60 mt-1">Exemple : 2025-10 pour octobre 2025.</p>
-          </div>
-          <button className="btn btn-secondary w-full justify-center"
-            onClick={()=>{
-              if(!source || !target){ return; }
-              const [ty, tm] = target.split('-').map(Number);
-              onDuplicate(source, ty, tm);
-              onClose();
-            }}>
-            <Lucide icon="check-circle2"/> Dupliquer
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* --------- Edit Month Modal --------- */
-function EditMonthModal({show, onClose, sourceKey, onApply}) {
-  const [target, setTarget] = React.useState(sourceKey || monthKeyFromDate(new Date()));
-  React.useEffect(()=>{ setTarget(sourceKey || monthKeyFromDate(new Date())); }, [sourceKey, show]);
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div className="glass max-w-md w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Lucide icon="calendar-range"/> Modifier la date du mois
-        </h2>
-        <div className="space-y-4">
-          <div className="text-white/80 text-sm">Mois source : <span className="font-semibold">{formatMonthLabel(sourceKey||'')}</span></div>
-          <div>
-            <label className="block text-white/70 mb-1">Nouveau mois</label>
-            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <button className="btn btn-secondary w-full justify-center"
-            onClick={()=>{
-              if(!sourceKey || !target) return;
-              const [ty, tm] = target.split('-').map(Number);
-              onApply(sourceKey, ty, tm);
-              onClose();
-            }}>
-            <Lucide icon="save"/> Appliquer
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TransactionList({transactions, onEdit, onDelete, monthFilter, setMonthFilter, openHistory, openDuplicate}) {
-  const [query, setQuery] = React.useState("");
-  const [cat, setCat] = React.useState("all");
-  const months = getMonthsWithData(transactions);
-
-  const filtered = transactions.filter(tx=>{
-    const q = query.toLowerCase();
-    const matchesQ = !q || tx.title.toLowerCase().includes(q) || (tx.tags||[]).some(tag=>tag.includes(q));
-    const matchesCat = cat==="all"||tx.category.name===cat;
-    const matchesMonth = monthFilter==='all' || monthKeyFromDate(tx.date)===monthFilter;
-    return matchesQ && matchesCat && matchesMonth;
   });
 
-  return (
-    <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto" style={{minWidth:'680px'}}>
-      <div className="flex flex-row items-center gap-3 mb-4 flex-wrap">
-        <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-white/30" />
-        <CategoryFilter cat={cat} setCat={setCat} transactions={transactions} />
-        <MonthFilter monthFilter={monthFilter} setMonthFilter={setMonthFilter} months={months} />
-        <div className="flex-1"></div>
-        <button className="btn btn-secondary" onClick={openDuplicate} title="Dupliquer un mois vers une autre période"><Lucide icon="copy"/> Dupliquer</button>
-        <button className="btn" onClick={openHistory} title="Voir tous les mois enregistrés"><Lucide icon="history"/> Historique des mois</button>
-      </div>
-      <div className="overflow-x-auto" style={{minWidth: '680px'}}>
-        <table className="min-w-full text-white/90 text-sm">
-          <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left py-2">Titre</th>
-              <th className="text-left py-2">Catégorie</th>
-              <th className="text-left py-2">Montant</th>
-              <th className="text-left py-2">Date</th>
-              <th className="text-left py-2">Type</th>
-              <th className="text-left py-2">Tags</th>
-              <th className="text-left py-2"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(tx=>(
-              <tr key={tx.id} className="hover:bg-white/10 transition">
-                <td className="py-2">
-                  <div className="flex items-center gap-2">
-                    <span>{tx.title}</span>
-                    {tx.link && (
-                      <a href={tx.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center text-white/80 hover:opacity-90" title="Ouvrir le lien">
-                        <Lucide icon="link-2" />
-                      </a>
-                    )}
-                  </div>
-                </td>
-                <td className="py-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10">
-                    <Lucide icon={tx.category.icon} color={tx.category.color} size={18}/>{tx.category.name}
-                  </span>
-                </td>
-                <td className="py-2 font-bold" style={{color:tx.type==="income"?"var(--success)":"var(--danger)"}}>
-                  {tx.type==="expense"? "-": "+"}{formatAmount(tx.amount)}
-                </td>
-                <td className="py-2">{formatDate(tx.date)}</td>
-                <td className="py-2">{tx.type==="income"?<span className="font-bold" style={{color:"var(--success)"}}>Entrée</span>:<span className="font-bold" style={{color:"var(--danger)"}}>Sortie</span>}</td>
-                <td className="py-2">{(tx.tags||[]).map(tag=><span key={tag} className="px-2 py-0.5 mx-1 bg-white/10 rounded-full">{tag}</span>)}</td>
-                <td className="py-2 flex gap-2">
-                  {/* Bouton lien à droite SUPPRIMÉ, on conserve seulement le lien dans le titre */}
-                  <button onClick={()=>onEdit(tx)} title="Éditer" className="hover:opacity-90"><Lucide icon="edit" /></button>
-                  <button onClick={()=>onDelete(tx.id)} title="Supprimer" className="hover:opacity-90"><Lucide icon="trash-2" /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {!filtered.length && <div className="text-white/60 text-center my-6">Aucune transaction ne correspond.</div>}
-      </div>
-    </div>
-  );
-}
-
-function AddOrEditModal({show, onClose, onSave, tx}) {
-  const isEdit = !!tx;
-  const [title, setTitle] = React.useState(tx?.title||"");
-  const [amount, setAmount] = React.useState(tx?.amount||"");
-  const [type, setType] = React.useState(tx?.type||"expense");
-  const [cat, setCat] = React.useState(tx?.category?.name||CATEGORIES[0].name);
-  const [date, setDate] = React.useState(tx?.date ? new Date(tx.date).toISOString().slice(0,10) : new Date().toISOString().slice(0,10));
-  const [tags, setTags] = React.useState((tx?.tags||[]).join(', '));
-  const [link, setLink] = React.useState(tx?.link||"");
-
-  React.useEffect(()=>{
-    if(tx){
-      setTitle(tx.title); setAmount(tx.amount); setType(tx.type);
-      setCat(tx.category.name); setDate(new Date(tx.date).toISOString().slice(0,10));
-      setTags((tx.tags||[]).join(', ')); setLink(tx.link||"");
-    } else {
-      setTitle(""); setAmount(""); setType("expense"); setCat(CATEGORIES[0].name); setDate(new Date().toISOString().slice(0,10)); setTags(""); setLink("");
-    }
-  }, [tx, show]);
-
-  function submit(e) {
-    e.preventDefault();
-    if(!title||!amount||isNaN(+amount)) return;
-    const selectedCat = CATEGORIES.find(c => normalizeString(c.name) === normalizeString(cat));
-    if (!selectedCat) { alert("Catégorie invalide !"); return; }
-    const cleanLink = normalizeUrl(link);
-    onSave({
-      id: tx?.id || randomId(),
-      title, amount: Number(amount), date: new Date(date),
-      category: selectedCat, type,
-      tags: tags.split(",").map(s=>s.trim()).filter(Boolean),
-      link: cleanLink || ""
-    });
-    onClose();
-  }
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
-      <div className="glass max-w-lg w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-2">{isEdit ? "Modifier" : "Ajouter"} une transaction</h2>
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="block text-white/70">Titre</label>
-            <input required type="text" value={title} onChange={e=>setTitle(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="block text-white/70">Montant</label>
-              <input required type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-            </div>
-            <div className="flex-1">
-              <label className="block text-white/70">Type</label>
-              <select value={type} onChange={e=>setType(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none">
-                <option value="expense">Sortie</option>
-                <option value="income">Entrée</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="block text-white/70">Catégorie</label>
-            <CategorySelect cat={cat} setCat={setCat} categories={CATEGORIES}/>
-          </div>
-  <div>
-            <label className="block text-white/70">Date</label>
-            <input required type="date" value={date} onChange={e=>setDate(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <div>
-            <label className="block text-white/70">Tags (séparés par ,)</label>
-            <input type="text" value={tags} onChange={e=>setTags(e.target.value)} placeholder="courses,loisir..." className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-          </div>
-          <div>
-            <label className="block text-white/70">Lien (facultatif)</label>
-            <div className="flex gap-2">
-              <input type="url" inputMode="url" placeholder="https://exemple.com/abonnement" value={link} onChange={e=>setLink(e.target.value)} className="flex-1 bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
-              {link && (
-                <>
-                  <a href={normalizeUrl(link)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" title="Ouvrir"><Lucide icon="external-link"/></a>
-                  <button type="button" onClick={()=>setLink("")} className="btn btn-danger" title="Supprimer le lien"><Lucide icon="link-2-off"/></button>
-                </>
-              )}
-            </div>
-          </div>
-
-          <button type="submit" className="btn w-full justify-center mt-3">
-            {isEdit ? <><Lucide icon="save"/> Enregistrer</> : <><Lucide icon="plus"/> Ajouter</>}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function SettingsModal({show, onClose}) {
-  if(!show) return null;
-  return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
-      <div className="glass max-w-sm w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
-        <h2 className="text-xl font-bold text-white mb-2">Paramètres utilisateur</h2>
-        <button className="btn w-full justify-center mt-4 transition" onClick={onClose}>Fermer</button>
-      </div>
-    </div>
-  );
-}
-
-/* ------- Local storage ------- */
-function useLocalTransactions() {
-  const [transactions, setTransactions] = React.useState([]);
-  React.useEffect(()=>{
+  // Auto-login au chargement si on avait déjà consenti (pas de popup)
+  if (localStorage.getItem("onyx_google_authed") === "1") {
+    // Tente d'obtenir un token silencieux; si ça échoue, on repasse déconnecté
     try {
-      const data = localStorage.getItem("onyx_budget_v2");
-      if(data){
-        const arr = JSON.parse(data);
-        setTransactions(sortTransactions(Array.isArray(arr)?arr:[]));
-      }
-    } catch {}
-  },[]);
-  React.useEffect(()=>{
-    localStorage.setItem("onyx_budget_v2", JSON.stringify(transactions));
-  },[transactions]);
-  function setAndSort(arr) { setTransactions(sortTransactions(arr)); }
-  return [transactions, setAndSort];
+      tokenClient.requestAccessToken({ prompt: "" });
+    } catch {
+      localStorage.removeItem("onyx_google_authed");
+      setUiSignedIn(false);
+    }
+  }
+
+  // Si on revient sur l'onglet et que le token est proche d'expirer → refresh
+  document.addEventListener("visibilitychange", ()=>{
+    if (document.visibilityState === "visible" && accessToken) {
+      const remaining = accessTokenExpiry - Date.now();
+      if (remaining < 90*1000) tokenClient?.requestAccessToken({ prompt: "" });
+    }
+  });
 }
+
+function signInWithGoogle(){ tokenClient?.requestAccessToken({ prompt: "consent" }); }
+
+function signOutGoogle(){
+  try { accessToken && google?.accounts?.oauth2?.revoke?.(accessToken, ()=>{}); } catch {}
+  accessToken = null;
+  accessTokenExpiry = 0;
+  if (refreshTimer) clearTimeout(refreshTimer);
+  localStorage.removeItem("onyx_google_authed");
+  setUiSignedIn(false);
+  window.dispatchEvent(new Event("ONYX_SIGNED_OUT"));
+}
+
+window.signInWithGoogle = signInWithGoogle;
+window.signOutGoogle = signOutGoogle;
+
+async function driveRequest(url, opts = {}) {
+  if (!accessToken) throw new Error("Non authentifié");
+  const headers = Object.assign({}, opts.headers || {}, { Authorization: `Bearer ${accessToken}` });
+  const res = await fetch(url, { ...opts, headers });
+  if (!res.ok) throw new Error(await res.text());
+  return res;
+}
+async function ensureAppDataFileId() {
+  const listRes = await driveRequest(
+    "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name%20%3D%20%27onyx_transactions.json%27"
+  );
+  const data = await listRes.json();
+  if (data.files && data.files.length) return data.files[0].id;
+
+  const boundary = "-------314159265358979323846";
+  const delimiter = `--${boundary}\r\n`;
+  const closeDelim = `--${boundary}--`;
+
+  const metadata = { name: "onyx_transactions.json", parents: ["appDataFolder"] };
+  const body =
+    delimiter + "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+    JSON.stringify(metadata) + "\r\n" +
+    delimiter + "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+    "[]\r\n" + closeDelim;
+
+  const createRes = await driveRequest(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+    { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body }
+  );
+  const created = await createRes.json();
+  return created.id;
+}
+async function loadTransactionsFromDrive() {
+  const fileId = await ensureAppDataFileId();
+  const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+  return await res.json();
+}
+async function saveTransactionsToDrive(transactions) {
+  const fileId = await ensureAppDataFileId();
+  await driveRequest(
+    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(transactions) }
+  );
+}
+
+/* ==================== App (UI/logic) ==================== */
+function Lucide(props){ React.useEffect(()=>{ if(window.lucide) window.lucide.createIcons(); },[props.icon]); return <i data-lucide={props.icon} className={props.className} style={{display:"inline-block",verticalAlign:"middle",color:props.color||"inherit"}}></i> }
+
+const CATEGORIES=[{icon:"wallet",name:"Revenus",color:"#10b981"},{icon:"shopping-cart",name:"Alimentation",color:"#00d9ff"},{icon:"utensils",name:"Restaurants",color:"#ffb700"},{icon:"coffee",name:"Cafés / Bars",color:"#ff006e"},{icon:"home",name:"Logement",color:"#6366f1"},{icon:"flame",name:"Énergie / Gaz",color:"#6366f1"},{icon:"droplet",name:"Eau",color:"#0ea5e9"},{icon:"wifi",name:"Internet / Télécom",color:"#6366f1"},{icon:"phone",name:"Téléphone",color:"#6366f1"},{icon:"car",name:"Voiture",color:"#2563eb"},{icon:"bus",name:"Transports en commun",color:"#22d3ee"},{icon:"bicycle",name:"Vélo / Mobilité douce",color:"#06b6d4"},{icon:"gas-pump",name:"Carburant",color:"#fdba74"},{icon:"plane",name:"Voyages",color:"#38bdf8"},{icon:"train",name:"Train",color:"#3b82f6"},{icon:"shopping-bag",name:"Shopping",color:"#f472b6"},{icon:"gift",name:"Cadeaux",color:"#ef4444"},{icon:"banknote",name:"Impôts / Taxes",color:"#a21caf"},{icon:"heart-pulse",name:"Santé",color:"#ef4444"},{icon:"user",name:"Famille",color:"#fb7185"},{icon:"users",name:"Social",color:"#00d9ff"},{icon:"book",name:"Éducation",color:"#818cf8"},{icon:"briefcase",name:"Travail",color:"#6366f1"},{icon:"tv",name:"Abonnements",color:"#6366f1"},{icon:"music",name:"Divertissement / Musique",color:"#a3e635"},{icon:"gamepad-2",name:"Jeux",color:"#0ea5e9"},{icon:"star",name:"Bonus",color:"#facc15"},{icon:"hammer",name:"Bricolage",color:"#eab308"},{icon:"paw-print",name:"Animaux",color:"#10b981"},{icon:"palette",name:"Culture",color:"#c026d3"},{icon:"film",name:"Cinéma / Spectacles",color:"#f59e42"},{icon:"trophy",name:"Sports",color:"#f43f5e"},{icon:"smartphone",name:"Électronique",color:"#0ea5e9"},{icon:"credit-card",name:"Crédit",color:"#6366f1"},{icon:"umbrella",name:"Assurance",color:"#818cf8"},{icon:"piggy-bank",name:"Épargne",color:"#10b981"},{icon:"repeat",name:"Dépenses récurrentes",color:"#6366f1"},{icon:"building-2",name:"Charges de copropriété",color:"#f59e42"},{icon:"flower",name:"Jardin / Plantes",color:"#10b981"},{icon:"truck",name:"Livraison",color:"#fbbf24"},{icon:"scissors",name:"Beauté / Coiffeur",color:"#f472b6"},{icon:"baby",name:"Enfants",color:"#a3e635"},{icon:"bug",name:"Imprévus",color:"#38bdf8"},{icon:"smile",name:"Autre",color:"#d1d5db"}];
+
+const formatAmount=n=>n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+const formatDate=d=>new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"short"});
+const sum=(arr,fn)=>arr.reduce((a,c)=>a+fn(c),0);
+const randomId=()=>Math.random().toString(36).slice(2,10);
+const normalizeString=str=>(str||"").normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const normalizeUrl=u=>!u?"":(/^https?:\/\//i.test(u.trim())?u.trim():"https://"+u.trim());
+const sortTransactions=arr=>{if(!Array.isArray(arr))return[];const i=arr.filter(t=>t.type==="income").sort((a,b)=>b.amount-a.amount);const e=arr.filter(t=>t.type==="expense").sort((a,b)=>b.amount-a.amount);return[...i,...e]}
+
+function monthKeyFromDate(d){const dt=new Date(d);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;}
+function formatMonthLabel(key){const [y,m]=key.split('-').map(n=>+n);const dt=new Date(y,m-1,1);return dt.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}
+function getMonthsWithData(transactions){const map=new Map();transactions.forEach(t=>{const k=monthKeyFromDate(t.date);if(!map.has(k))map.set(k,[]);map.get(k).push(t)});return Array.from(map.entries()).map(([key,list])=>({key,label:formatMonthLabel(key),count:list.length,totalIn:sum(list.filter(t=>t.type==="income"),t=>+t.amount),totalOut:sum(list.filter(t=>t.type==="expense"),t=>+t.amount)})).sort((a,b)=>a.key<b.key?1:-1)}
+function addMonthsClamped(date,n){const d=new Date(date);const y=d.getFullYear(),m=d.getMonth();const targetDays=new Date(y,m+n+1,0).getDate();const day=Math.min(d.getDate(),targetDays);return new Date(y,m+n,day,d.getHours(),d.getMinutes(),d.getSeconds(),d.getMilliseconds())}
+function setDateToMonth(date,y,mi){const d=new Date(date);const days=new Date(y,mi+1,0).getDate();const day=Math.min(d.getDate(),days);return new Date(y,mi,day,d.getHours(),d.getMinutes(),d.getSeconds(),d.getMilliseconds())}
+function isCurrentMonthKey(key){const now=new Date();const current=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;return key===current}
+
+/* --- UI components (identiques à avant) --- */
+function BadgeAchievement({show,type}){if(!show)return null;let label,icon;if(type==="first_income"){label="Premier revenu !";icon="wallet"}else if(type==="first_saving"){label="Première épargne !";icon="piggy-bank"}else{return null}return(<div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"><div className="badge-anim-pop flex flex-col items-center px-6 py-4 rounded-3xl shadow-2xl border-2 border-white/10 glass" style={{background:"linear-gradient(135deg,rgba(20,20,36,0.97),rgba(10,0,32,0.85))"}}><Lucide icon={icon}/><span className="mt-3 text-lg font-bold text-white">{label}</span><span className="mt-1 px-3 py-1 rounded-lg text-xs" style={{background:"rgba(255,255,255,.08)"}}>{type==="first_income"?"Bravo pour ton premier revenu !":"Épargner, c'est gagner."}</span></div></div>)}
+function SuccessCheckmark({show}){if(!show)return null;return(<div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"><div className="check-anim bg-white/90 rounded-full shadow-2xl flex items-center justify-center" style={{width:96,height:96}}><svg width="64" height="64" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="var(--success)" strokeWidth="5"/><path fill="none" stroke="var(--success)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16"/></svg></div></div>)}
+function Header(){return(<header className="onyx-header flex items-center px-14 py-5 mb-4" style={{zIndex:20,position:"relative",minHeight:"80px"}}><div className="flex items-center gap-5"><img src="https://i.ibb.co/5WMnx7y6/8ba349756916.png" alt="Onyx Budget" className="h-[99px] w-[99px]" style={{objectFit:"contain",background:"none",border:"none",boxShadow:"none"}}/><span className="onyx-title">Onyx Budget V2</span></div></header>)}
+
+function MetricsCards({transactions,scope,toggleScope,selectedMonthKey}){
+  const now=new Date();const currentMonthKey=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const effectiveMonthKey=selectedMonthKey&&selectedMonthKey!=='all'?selectedMonthKey:currentMonthKey;
+  const [effYear]=effectiveMonthKey.split('-').map(Number);
+  const scopeIsYear=scope==='year';
+  const dataset=scopeIsYear?transactions.filter(t=>new Date(t.date).getFullYear()===effYear):transactions.filter(t=>monthKeyFromDate(t.date)===effectiveMonthKey);
+  const totalIncome=sum(dataset.filter(t=>t.type==="income"),t=>+t.amount);
+  const totalExpense=sum(dataset.filter(t=>t.type==="expense"),t=>+t.amount);
+  const savings=sum(dataset.filter(t=>t.category&&normalizeString(t.category.name)===normalizeString("Épargne")),t=>+t.amount);
+  const balance=totalIncome-totalExpense;
+  const chipText=scopeIsYear?`Année ${effYear}${selectedMonthKey!=='all'&&!isCurrentMonthKey(effectiveMonthKey)?" (selon vue)":""}`:(isCurrentMonthKey(effectiveMonthKey)?"Mois courant":formatMonthLabel(effectiveMonthKey));
+  return(<div className="grid grid-cols-4 gap-4 my-4 overflow-x-auto min-w-[680px]">
+    <div className="glass p-4 md:p-6 shadow-xl"><div className="flex items-center gap-2"><Lucide icon="credit-card"/><span className="uppercase text-xs opacity-60 text-white">SOLDE</span><span className="ml-auto chip-scope">{chipText}</span></div><div className="font-bold text-2xl md:text-3xl mt-2 flex items-center">{formatAmount(balance)}</div><button className="mt-2 btn btn-secondary text-xs px-2 py-1" onClick={toggleScope} title={scopeIsYear?"Afficher le mois":`Afficher l'année ${effYear}`}><Lucide icon="refresh-ccw"/>{scopeIsYear?"Afficher le mois":`Afficher l'année ${effYear}`}</button></div>
+    <div className="glass p-4 md:p-6 shadow-xl"><div className="flex items-center gap-2"><Lucide icon="download"/><span className="uppercase text-xs opacity-60">REVENUS</span></div><div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(totalIncome)}</div></div>
+    <div className="glass p-4 md:p-6 shadow-xl"><div className="flex items-center gap-2"><Lucide icon="upload"/><span className="uppercase text-xs opacity-60">DÉPENSES</span></div><div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(totalExpense)}</div></div>
+    <div className="glass p-4 md:p-6 shadow-xl"><div className="flex items-center gap-2"><Lucide icon="piggy-bank"/><span className="uppercase text-xs opacity-60">ÉCONOMIES</span></div><div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(savings)}</div></div>
+  </div>)}
+
+function getMonthDays(startDate,transactions){const txSorted=[...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));let firstDate=startDate;if(txSorted.length)firstDate=new Date(txSorted[0].date);const y=firstDate.getFullYear(),m=firstDate.getMonth(),daysInMonth=new Date(y,m+1,0).getDate();return Array.from({length:daysInMonth},(_,i)=>new Date(y,m,i+1))}
+function getDailyBalances(transactions){if(!transactions.length)return{labels:[],data:[]};const monthDays=getMonthDays(new Date(),transactions);const sorted=[...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));let balances=[],current=0,idx=0;monthDays.forEach(day=>{while(idx<sorted.length&&(new Date(sorted[idx].date)).toDateString()===day.toDateString()){current+=(sorted[idx].type==="income"?+sorted[idx].amount:-+sorted[idx].amount);idx++}balances.push(current)});return{labels:monthDays.map(d=>`${String(d.getDate()).padStart(2,'0')} ${d.toLocaleString("fr-FR",{month:"short"})}`),data:balances,days:monthDays}}
+function PremiumChart({transactions}){const ref=React.useRef();const{labels,data}=getDailyBalances(transactions);const totalRevenus=sum(transactions.filter(t=>t.type==="income"),t=>+t.amount);const[hoverPoint,setHoverPoint]=React.useState(null);React.useEffect(()=>{if(ref.current){const ctx=ref.current.getContext("2d");if(window.myChart) window.myChart.destroy();let gradient=ctx.createLinearGradient(0,0,0,200);gradient.addColorStop(0,"rgba(255,255,255,0.25)");gradient.addColorStop(1,"rgba(255,255,255,0.05)");let gradientLine=ctx.createLinearGradient(0,0,ref.current.width,0);gradientLine.addColorStop(0,"#ffffff");gradientLine.addColorStop(1,"#dddddd");window.myChart=new window.Chart(ctx,{type:"line",data:{labels:labels.length?labels:["—"],datasets:[{label:"Solde",data:data.length?data:[0],fill:true,borderWidth:3,borderColor:gradientLine,backgroundColor:gradient,pointRadius:data.length>1?4:10,pointBackgroundColor:"#ffffff",pointBorderWidth:2,pointBorderColor:"#00000033",pointHoverRadius:12,tension:.44}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{enabled:false,external:(c)=>{const{tooltip}=c;if(tooltip&&tooltip.dataPoints&&tooltip.dataPoints.length){setHoverPoint({index:tooltip.dataPoints[0].dataIndex,value:tooltip.dataPoints[0].parsed.y,label:tooltip.dataPoints[0].label})}else setHoverPoint(null);}}},elements:{line:{borderJoinStyle:"round",borderCapStyle:"round"}},scales:{y:{min:0,max:totalRevenus>0?Math.ceil(totalRevenus/10)*10:undefined,ticks:{color:"#fff",font:{size:15,weight:700},callback:v=>formatAmount(v)},grid:{color:"rgba(255,255,255,0.10)",lineWidth:1.2},border:{color:"rgba(255,255,255,0.17)"},beginAtZero:true},x:{ticks:{color:"#fff",font:{size:14}},grid:{color:"rgba(255,255,255,0.07)",drawOnChartArea:false},border:{color:"rgba(255,255,255,0.17)"},autoSkip:false,maxRotation:0,minRotation:0}},interaction:{mode:'nearest',intersect:true},animation:{duration:900,easing:'easeOutQuint'}}})}return()=>{if(window.myChart) window.myChart.destroy()}},[transactions]);return(<div className="relative" style={{minHeight:220}}><canvas ref={ref} height={110}></canvas>{hoverPoint&&(<div className="absolute z-20 pointer-events-none" style={{left:`calc(${(hoverPoint.index/(labels.length-1||1))*100}% - 48px)`,top:15,minWidth:'88px'}}><div className="rounded-2xl bg-black/50 border border-white/20 shadow-lg px-4 py-2 text-white text-center text-base font-bold">{formatAmount(hoverPoint.value)}<div className="text-xs text-white/70">{hoverPoint.label}</div></div></div>)}{(!transactions||transactions.length===0)&&(<div className="absolute inset-0 flex flex-col items-center justify-center text-white/40 text-xl font-bold pointer-events-none select-none" style={{letterSpacing:1}}><Lucide icon="moon"/><span className="mt-3">Aucune donnée</span></div>)}</div>)}
+
+function Dashboard({transactions,metricsScope,toggleMetricsScope,onAddTx,onExport,onImport,selectedMonthKey}){return(<div><MetricsCards transactions={transactions} scope={metricsScope} toggleScope={toggleMetricsScope} selectedMonthKey={selectedMonthKey}/><div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px',maxWidth:'900px'}}><div className="p-4" style={{minWidth:'600px',maxWidth:'900px'}}><div className="font-semibold mb-2 text-white/80">Solde global (historique)</div><PremiumChart transactions={transactions}/></div></div><div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}><button className="btn" onClick={onAddTx}><Lucide icon="plus-circle"/> Ajouter transaction</button><button className="btn" onClick={onExport}><Lucide icon="download"/> Exporter JSON</button><label className="btn cursor-pointer"><Lucide icon="upload"/> Importer JSON<input type="file" accept=".json" className="hidden" onChange={onImport}/></label></div></div>)}
+
+function CategorySelect({cat,setCat,categories}){const[open,setOpen]=React.useState(false);const ref=React.useRef();React.useEffect(()=>{function h(e){if(!ref.current?.contains(e.target))setOpen(false)}if(open)window.addEventListener("mousedown",h);return()=>window.removeEventListener("mousedown",h)},[open]);return(<div className="relative" ref={ref}><button type="button" className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10" onClick={()=>setOpen(v=>!v)} tabIndex={-1}><span className="flex items-center gap-2"><Lucide icon={categories.find(c=>c.name===cat)?.icon||"circle"} color={categories.find(c=>c.name===cat)?.color||"#fff"} size={20}/>{cat}</span><Lucide icon="chevron-down" size={18}/></button>{open&&(<div className="absolute z-50 w-full bg-black rounded-xl mt-1 border border-white/10 max-h-60 overflow-y-auto menu-categories">{categories.map(c=>(<button type="button" key={c.name} className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white" onClick={()=>{setCat(c.name);setOpen(false);}}><Lucide icon={c.icon} color={c.color} size={20}/><span className="text-white">{c.name}</span></button>))}</div>)}</div>)}
+
+function CategoryFilter({cat,setCat,transactions}){const[open,setOpen]=React.useState(false);const ref=React.useRef();React.useEffect(()=>{function h(e){if(!ref.current?.contains(e.target))setOpen(false)}if(open)window.addEventListener("mousedown",h);return()=>window.removeEventListener("mousedown",h)},[open]);const uniqueCats=Array.from(new Set(transactions.map(t=>t.category.name)));return(<div className="relative" ref={ref}><button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10" onClick={()=>setOpen(v=>!v)}>{cat==="all"?<><Lucide icon="list" size={18}/> Toutes catégories</>:<><Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon||"circle"} color={transactions.find(t=>t.category.name===cat)?.category.color||"#fff"} size={18}/>{cat}</>}<Lucide icon="chevron-down" size={16}/></button>{open&&(<div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[190px] max-h-60 overflow-y-auto menu-categories"><button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white" onClick={()=>{setCat("all");setOpen(false);}}><Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span></button>{uniqueCats.map(c=>{const catObj=transactions.find(t=>t.category.name===c)?.category;return(<button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white" key={c} onClick={()=>{setCat(c);setOpen(false);}}><Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/><span className="text-white">{c}</span></button>)})}</div>)}</div>)}
+
+function MonthFilter({monthFilter,setMonthFilter,months}){const[open,setOpen]=React.useState(false);const ref=React.useRef();React.useEffect(()=>{function h(e){if(!ref.current?.contains(e.target))setOpen(false)}if(open)window.addEventListener("mousedown",h);return()=>window.removeEventListener("mousedown",h)},[open]);return(<div className="relative" ref={ref}><button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10" onClick={()=>setOpen(v=>!v)}><Lucide icon="calendar" size={18}/>{monthFilter==='all'?'Tous les mois':formatMonthLabel(monthFilter)}<Lucide icon="chevron-down" size={16}/></button>{open&&(<div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[220px] max-h-72 overflow-y-auto"><button className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center gap-2" onClick={()=>{setMonthFilter('all');setOpen(false);}}><Lucide icon="list" size={18}/> Tous les mois</button>{months.map(m=>(<button key={m.key} className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center justify-between" onClick={()=>{setMonthFilter(m.key);setOpen(false);}}><span className="flex items-center gap-2"><Lucide icon="calendar-days" size={18}/>{m.label}</span><span className="text-xs text-white/60">{m.count}</span></button>))}</div>)}</div>)}
+
+function MonthHistoryModal({show,onClose,months,onShowMonth,onCopyMonth,onEditMonth,onDeleteMonth}){if(!show)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="glass max-w-2xl w-full p-6 relative"><button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button><h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2"><Lucide icon="history"/> Historique des mois</h2>{months.length?(<div className="space-y-2 max-h-[60vh] overflow-y-auto">{months.map(m=>(<div key={m.key} className="flex items-center justify-between rounded-xl px-3 py-3 border border-white/10" style={{background:"rgba(255,255,255,.05)"}}><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center"><Lucide icon="calendar-check"/></div><div><div className="text-white font-semibold">{m.label}</div><div className="text-white/60 text-xs">{m.count} éléments — {formatAmount(m.totalIn - m.totalOut)}</div></div></div><div className="flex items-center gap-2 flex-wrap justify-end"><button className="btn btn-secondary" onClick={()=>{onShowMonth(m.key);onClose();}} title="Afficher dans le tableau"><Lucide icon="eye"/><span>Afficher</span></button><button className="btn" onClick={()=>onCopyMonth(m.key)} title="Copier toutes les transactions vers le mois suivant"><Lucide icon="copy"/><span>Copier → mois suivant</span></button><button className="btn btn-ghost" onClick={()=>onEditMonth(m.key)} title="Modifier la date du mois"><Lucide icon="calendar-range"/><span>Modifier date</span></button><button className="btn btn-danger" onClick={()=>onDeleteMonth(m.key)} title="Supprimer toutes les transactions de ce mois"><Lucide icon="trash-2"/><span>Supprimer</span></button></div></div>))}</div>):(<div className="text-white/70">Aucun mois trouvé.</div>)}</div></div>)}
+
+function DuplicationModal({show,onClose,months,defaultSourceKey,onDuplicate}){const[source,setSource]=React.useState(defaultSourceKey);const[target,setTarget]=React.useState(()=>{const base=source||monthKeyFromDate(new Date());const[y,m]=base.split('-').map(Number);const d=new Date(y,m-1,1);const next=addMonthsClamped(d,1);return `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`});React.useEffect(()=>{setSource(defaultSourceKey)},[defaultSourceKey]);if(!show)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="glass max-w-md w-full p-6 relative"><button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button><h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Lucide icon="copy"/> Dupliquer des transactions</h2><div className="space-y-4"><div><label className="block text-white/70 mb-1">Mois source</label><select value={source} onChange={e=>setSource(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10">{months.map(m=>(<option key={m.key} value={m.key}>{m.label} — {m.count} éléments</option>))}</select></div><div><label className="block text-white/70 mb-1">Mois cible</label><input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/><p className="text-xs text-white/60 mt-1">Exemple : 2025-10 pour octobre 2025.</p></div><button className="btn btn-secondary w-full justify-center" onClick={()=>{if(!source||!target)return;const[ty,tm]=target.split('-').map(Number);onDuplicate(source,ty,tm);onClose();}}><Lucide icon="check-circle2"/> Dupliquer</button></div></div></div>)}
+
+function EditMonthModal({show,onClose,sourceKey,onApply}){const[target,setTarget]=React.useState(sourceKey||monthKeyFromDate(new Date()));React.useEffect(()=>{setTarget(sourceKey||monthKeyFromDate(new Date()))},[sourceKey,show]);if(!show)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"><div className="glass max-w-md w-full p-6 relative"><button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button><h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2"><Lucide icon="calendar-range"/> Modifier la date du mois</h2><div className="space-y-4"><div className="text-white/80 text-sm">Mois source : <span className="font-semibold">{formatMonthLabel(sourceKey||'')}</span></div><div><label className="block text-white/70 mb-1">Nouveau mois</label><input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/></div><button className="btn btn-secondary w-full justify-center" onClick={()=>{if(!sourceKey||!target)return;const[ty,tm]=target.split('-').map(Number);onApply(sourceKey,ty,tm);onClose();}}><Lucide icon="save"/> Appliquer</button></div></div></div>)}
+
+function TransactionList({transactions,onEdit,onDelete,monthFilter,setMonthFilter,openHistory,openDuplicate}){const[query,setQuery]=React.useState("");const[cat,setCat]=React.useState("all");const months=getMonthsWithData(transactions);const filtered=transactions.filter(tx=>{const q=query.toLowerCase();const matchesQ=!q||tx.title.toLowerCase().includes(q)||(tx.tags||[]).some(tag=>tag.includes(q));const matchesCat=cat==="all"||tx.category.name===cat;const matchesMonth=monthFilter==='all'||monthKeyFromDate(tx.date)===monthFilter;return matchesQ&&matchesCat&&matchesMonth});return(<div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto" style={{minWidth:'680px'}}><div className="flex flex-row items-center gap-3 mb-4 flex-wrap"><input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-white/30"/><CategoryFilter cat={cat} setCat={setCat} transactions={transactions}/><MonthFilter monthFilter={monthFilter} setMonthFilter={setMonthFilter} months={months}/><div className="flex-1"></div><button className="btn btn-secondary" onClick={openDuplicate} title="Dupliquer un mois vers une autre période"><Lucide icon="copy"/> Dupliquer</button><button className="btn" onClick={openHistory} title="Voir tous les mois enregistrés"><Lucide icon="history"/> Historique des mois</button></div><div className="overflow-x-auto" style={{minWidth:'680px'}}><table className="min-w-full text-white/90 text-sm"><thead><tr className="border-b border-white/10"><th className="text-left py-2">Titre</th><th className="text-left py-2">Catégorie</th><th className="text-left py-2">Montant</th><th className="text-left py-2">Date</th><th className="text-left py-2">Type</th><th className="text-left py-2">Tags</th><th className="text-left py-2"></th></tr></thead><tbody>{filtered.map(tx=>(<tr key={tx.id} className="hover:bg-white/10 transition"><td className="py-2"><div className="flex items-center gap-2"><span>{tx.title}</span>{tx.link&&(<a href={tx.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center text-white/80 hover:opacity-90" title="Ouvrir le lien"><Lucide icon="link-2"/></a>)}</div></td><td className="py-2"><span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10"><Lucide icon={tx.category.icon} color={tx.category.color} size={18}/>{tx.category.name}</span></td><td className="py-2 font-bold" style={{color:tx.type==="income"?"var(--success)":"var(--danger)"}}>{tx.type==="expense"? "-": "+"}{formatAmount(tx.amount)}</td><td className="py-2">{formatDate(tx.date)}</td><td className="py-2">{tx.type==="income"?<span className="font-bold" style={{color:"var(--success)"}}>Entrée</span>:<span className="font-bold" style={{color:"var(--danger)"}}>Sortie</span>}</td><td className="py-2">{(tx.tags||[]).map(tag=><span key={tag} className="px-2 py-0.5 mx-1 bg-white/10 rounded-full">{tag}</span>)}</td><td className="py-2 flex gap-2">{/* Bouton lien à droite supprimé, lien dans le titre */}<button onClick={()=>onEdit(tx)} title="Éditer" className="hover:opacity-90"><Lucide icon="edit"/></button><button onClick={()=>onDelete(tx.id)} title="Supprimer" className="hover:opacity-90"><Lucide icon="trash-2"/></button></td></tr>))}</tbody></table>{!filtered.length&&<div className="text-white/60 text-center my-6">Aucune transaction ne correspond.</div>}</div></div>)}
+
+function AddOrEditModal({show,onClose,onSave,tx}){const isEdit=!!tx;const[title,setTitle]=React.useState(tx?.title||"");const[amount,setAmount]=React.useState(tx?.amount||"");const[type,setType]=React.useState(tx?.type||"expense");const[cat,setCat]=React.useState(tx?.category?.name||CATEGORIES[0].name);const[date,setDate]=React.useState(tx?.date?new Date(tx.date).toISOString().slice(0,10):new Date().toISOString().slice(0,10));const[tags,setTags]=React.useState((tx?.tags||[]).join(', '));const[link,setLink]=React.useState(tx?.link||"");React.useEffect(()=>{if(tx){setTitle(tx.title);setAmount(tx.amount);setType(tx.type);setCat(tx.category.name);setDate(new Date(tx.date).toISOString().slice(0,10));setTags((tx.tags||[]).join(', '));setLink(tx.link||"")}else{setTitle("");setAmount("");setType("expense");setCat(CATEGORIES[0].name);setDate(new Date().toISOString().slice(0,10));setTags("");setLink("")}},[tx,show]);function submit(e){e.preventDefault();if(!title||!amount||isNaN(+amount))return;const selectedCat=CATEGORIES.find(c=>normalizeString(c.name)===normalizeString(cat));if(!selectedCat){alert("Catégorie invalide !");return}const cleanLink=normalizeUrl(link);onSave({id:tx?.id||randomId(),title,amount:Number(amount),date:new Date(date),category:selectedCat,type,tags:tags.split(",").map(s=>s.trim()).filter(Boolean),link:cleanLink||""});onClose()}if(!show)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40"><div className="glass max-w-lg w-full p-6 relative"><button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button><h2 className="text-xl font-bold text-white mb-2">{isEdit?"Modifier":"Ajouter"} une transaction</h2><form onSubmit={submit} className="space-y-4"><div><label className="block text-white/70">Titre</label><input required type="text" value={title} onChange={e=>setTitle(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/></div><div className="flex gap-2"><div className="flex-1"><label className="block text-white/70">Montant</label><input required type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/></div><div className="flex-1"><label className="block text-white/70">Type</label><select value={type} onChange={e=>setType(e.target.value)} className="w-full bg-black text-white rounded-xl px-3 py-2 outline-none"><option value="expense">Sortie</option><option value="income">Entrée</option></select></div></div><div><label className="block text-white/70">Catégorie</label><CategorySelect cat={cat} setCat={setCat} categories={CATEGORIES}/></div><div><label className="block text-white/70">Date</label><input required type="date" value={date} onChange={e=>setDate(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/></div><div><label className="block text-white/70">Tags (séparés par ,)</label><input type="text" value={tags} onChange={e=>setTags(e.target.value)} placeholder="courses,loisir..." className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/></div><div><label className="block text-white/70">Lien (facultatif)</label><div className="flex gap-2"><input type="url" inputMode="url" placeholder="https://exemple.com/abonnement" value={link} onChange={e=>setLink(e.target.value)} className="flex-1 bg-white/5 text-white rounded-xl px-3 py-2 outline-none"/>{link&&(<><a href={normalizeUrl(link)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" title="Ouvrir"><Lucide icon="external-link"/></a><button type="button" onClick={()=>setLink("")} className="btn btn-danger" title="Supprimer le lien"><Lucide icon="link-2-off"/></button></>)}</div></div><button type="submit" className="btn w-full justify-center mt-3">{isEdit?(<><Lucide icon="save"/> Enregistrer</>):(<><Lucide icon="plus"/> Ajouter</>)}</button></form></div></div>)}
+
+function SettingsModal({show,onClose}){if(!show)return null;return(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40"><div className="glass max-w-sm w-full p-6 relative"><button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button><h2 className="text-xl font-bold text-white mb-2">Paramètres utilisateur</h2><button className="btn w-full justify-center mt-4 transition" onClick={onClose}>Fermer</button></div></div>)}
+
+/* ------- Local storage helper ------- */
+function useLocalTransactions(){const[transactions,setTransactions]=React.useState([]);React.useEffect(()=>{try{const data=localStorage.getItem("onyx_budget_v2");if(data){const arr=JSON.parse(data);setTransactions(sortTransactions(Array.isArray(arr)?arr:[]));}}catch{}},[]);React.useEffect(()=>{localStorage.setItem("onyx_budget_v2",JSON.stringify(transactions))},[transactions]);return[transactions,arr=>setTransactions(sortTransactions(arr))]}
 
 /* ------------- APP PRINCIPAL -------------- */
-function App() {
-  const [transactions, setTransactions] = useLocalTransactions();
-  const [showModal, setShowModal] = React.useState(false);
-  const [editTx, setEditTx] = React.useState(null);
-  const [showSettings, setShowSettings] = React.useState(false);
-  const [showCheck, setShowCheck] = React.useState(false);
-  const [showBadge, setShowBadge] = React.useState(false);
-  const [badgeType, setBadgeType] = React.useState(null);
+function App(){
+  const[transactions,setTransactions]=useLocalTransactions();
+  const[showModal,setShowModal]=React.useState(false);
+  const[editTx,setEditTx]=React.useState(null);
+  const[showSettings,setShowSettings]=React.useState(false);
+  const[showCheck,setShowCheck]=React.useState(false);
+  const[showBadge,setShowBadge]=React.useState(false);
+  const[badgeType,setBadgeType]=React.useState(null);
+  const[monthFilter,setMonthFilter]=React.useState(monthKeyFromDate(new Date()));
+  const[metricsScope,setMetricsScope]=React.useState('month');
+  const toggleMetricsScope=()=>setMetricsScope(s=>s==='month'?'year':'month');
+  const[historyOpen,setHistoryOpen]=React.useState(false);
+  const[dupOpen,setDupOpen]=React.useState(false);
+  const[editMonthOpen,setEditMonthOpen]=React.useState(false);
+  const[editMonthSource,setEditMonthSource]=React.useState(null);
 
-  const [monthFilter, setMonthFilter] = React.useState(monthKeyFromDate(new Date()));
-  const [metricsScope, setMetricsScope] = React.useState('month');
-  const toggleMetricsScope = ()=> setMetricsScope(s => s==='month' ? 'year' : 'month');
+  const[googleReady,setGoogleReady]=React.useState(false);
 
-  const [historyOpen, setHistoryOpen] = React.useState(false);
-  const [dupOpen, setDupOpen] = React.useState(false);
-  const [editMonthOpen, setEditMonthOpen] = React.useState(false);
-  const [editMonthSource, setEditMonthSource] = React.useState(null);
+  React.useEffect(()=>{if(showCheck){setTimeout(()=>setShowCheck(false),1100)}},[showCheck]);
 
-  // Intégration Google: état de connexion
-  const [googleReady, setGoogleReady] = React.useState(false);
-
-  React.useEffect(()=>{ if(showCheck){ setTimeout(()=>setShowCheck(false), 1100); } }, [showCheck]);
-
-  // Écoute login/logout pour charger Drive
+  // Connexion/déconnexion Google → charge Drive / met l'état
   React.useEffect(()=>{
     async function handleSignedIn(){
-      try {
-        const remote = await loadTransactionsFromDrive();
-        if (Array.isArray(remote)) setTransactions(sortTransactions(remote));
+      try{
+        const remote=await loadTransactionsFromDrive();
+        if(Array.isArray(remote)) setTransactions(sortTransactions(remote));
         setGoogleReady(true);
-      } catch(e){ console.warn("Drive load error:", e); }
+      }catch(e){console.warn("Drive load error:",e)}
     }
     function handleSignedOut(){ setGoogleReady(false); }
-    window.addEventListener("ONYX_SIGNED_IN", handleSignedIn);
-    window.addEventListener("ONYX_SIGNED_OUT", handleSignedOut);
-    return ()=>{
-      window.removeEventListener("ONYX_SIGNED_IN", handleSignedIn);
-      window.removeEventListener("ONYX_SIGNED_OUT", handleSignedOut);
-    };
-  }, []);
+    window.addEventListener("ONYX_SIGNED_IN",handleSignedIn);
+    window.addEventListener("ONYX_SIGNED_OUT",handleSignedOut);
+    return ()=>{window.removeEventListener("ONYX_SIGNED_IN",handleSignedIn);window.removeEventListener("ONYX_SIGNED_OUT",handleSignedOut);}
+  },[]);
 
-  // Sauvegarde Drive (debounced) dès qu'il y a une modif et qu'on est connecté
-  const saveTimer = React.useRef(null);
+  // Sauvegarde Drive debounced si connecté
+  const saveTimer=React.useRef(null);
   React.useEffect(()=>{
-    if (!googleReady || !accessToken) return;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async ()=>{
-      try { await saveTransactionsToDrive(transactions); }
-      catch(e){ console.warn("Drive save error:", e); }
-    }, 500);
-  }, [transactions, googleReady]);
+    if(!googleReady||!accessToken) return;
+    if(saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current=setTimeout(async()=>{try{await saveTransactionsToDrive(transactions)}catch(e){console.warn("Drive save error:",e)}},500);
+  },[transactions,googleReady]);
 
-  function handleAddOrEdit(tx) {
-    let arr = [];
-    if (transactions && Array.isArray(transactions)) {
-      const i = transactions.findIndex(t=>t.id===tx.id);
-      if(i>=0) { arr = [...transactions]; arr[i] = tx; }
-      else { arr = [...transactions, tx]; }
-    } else { arr = [tx]; }
-    setTransactions(arr);
+  function handleAddOrEdit(tx){
+    let arr=[];if(transactions&&Array.isArray(transactions)){const i=transactions.findIndex(t=>t.id===tx.id);if(i>=0){arr=[...transactions];arr[i]=tx}else{arr=[...transactions,tx]}}else{arr=[tx]}
+    setTransactions(arr);setShowCheck(true);
+    window.confetti&&window.confetti({particleCount:100,spread:90,origin:{y:.2},startVelocity:32,colors:['#ef4444','#f43f5e','#ffffff']});
+    if((!transactions.some(t=>t.type==="income")&&tx.type==="income")){setTimeout(()=>{setBadgeType("first_income");setShowBadge(true)},800);setTimeout(()=>setShowBadge(false),3300)}
+    if((!transactions.some(t=>normalizeString(t.category.name)==="épargne")&&normalizeString(tx.category.name)==="épargne")){setTimeout(()=>{setBadgeType("first_saving");setShowBadge(true)},800);setTimeout(()=>setShowBadge(false),3300)}
+  }
+  const handleDelete=id=>setTransactions(transactions.filter(t=>t.id!==id));
+  function handleExport(){const dataStr="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(transactions,null,2));const link=document.createElement('a');link.href=dataStr;link.download="transactions.json";link.click()}
+  function handleImport(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=evt=>{try{const json=JSON.parse(evt.target.result);if(Array.isArray(json))setTransactions(json);else alert("Fichier invalide !")}catch{alert("Erreur import JSON")}};reader.readAsText(file)}
 
-    setShowCheck(true);
-    window.confetti && window.confetti({particleCount: 100, spread: 90, origin:{ y: 0.2 }, startVelocity:32, colors:['#ef4444','#f43f5e','#ffffff']});
-    if((!transactions.some(t=>t.type==="income") && tx.type==="income")) {
-      setTimeout(()=>{setBadgeType("first_income");setShowBadge(true);}, 800);
-      setTimeout(()=>setShowBadge(false), 3300);
-    }
-    if((!transactions.some(t=>normalizeString(t.category.name)==="épargne") && normalizeString(tx.category.name)==="épargne")) {
-      setTimeout(()=>{setBadgeType("first_saving");setShowBadge(true);}, 800);
-      setTimeout(()=>setShowBadge(false), 3300);
-    }
-  }
-  function handleDelete(id) { setTransactions(transactions.filter(t=>t.id!==id)); }
-  function handleExport() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions,null,2));
-    const link = document.createElement('a'); link.href = dataStr; link.download = "transactions.json"; link.click();
-  }
-  function handleImport(e) {
-    const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = evt=>{
-      try {
-        const json = JSON.parse(evt.target.result);
-        if(Array.isArray(json)) setTransactions(json); else alert("Fichier invalide !");
-      } catch { alert("Erreur import JSON"); }
-    };
-    reader.readAsText(file);
-  }
+  function duplicateMonthToTarget(sourceKey,ty,tm){const toCopy=transactions.filter(t=>monthKeyFromDate(t.date)===sourceKey);if(!toCopy.length){alert("Aucune transaction à copier pour ce mois.");return}const clones=toCopy.map(t=>({...t,id:randomId(),date:setDateToMonth(t.date,ty,tm-1)}));const next=sortTransactions([...transactions,...clones]);setTransactions(next);setMonthFilter(`${ty}-${String(tm).padStart(2,'0')}`);setShowCheck(true)}
+  function moveMonthToTarget(sourceKey,ty,tm){const targetKey=`${ty}-${String(tm).padStart(2,'0')}`;const updated=transactions.map(t=>monthKeyFromDate(t.date)!==sourceKey?t:{...t,date:setDateToMonth(t.date,ty,tm-1)});setTransactions(sortTransactions(updated));if(monthFilter===sourceKey)setMonthFilter(targetKey);setShowCheck(true)}
+  function deleteMonth(key){if(!confirm("Supprimer toutes les transactions de ce mois ?"))return;const remain=transactions.filter(t=>monthKeyFromDate(t.date)!==key);setTransactions(sortTransactions(remain));if(monthFilter===key)setMonthFilter(monthKeyFromDate(new Date()));setShowCheck(true)}
 
-  function duplicateMonthToTarget(sourceMonthKey, targetYear, targetMonth1to12) {
-    const toCopy = transactions.filter(t=>monthKeyFromDate(t.date)===sourceMonthKey);
-    if(!toCopy.length) { alert("Aucune transaction à copier pour ce mois."); return; }
-    const targetMonthIndex0 = targetMonth1to12 - 1;
-    const clones = toCopy.map(t=>{
-      const newDate = setDateToMonth(t.date, targetYear, targetMonthIndex0);
-      return { ...t, id: randomId(), date: newDate };
-    });
-    const nextState = sortTransactions([...transactions, ...clones]);
-    setTransactions(nextState);
-    setMonthFilter(`${targetYear}-${String(targetMonth1to12).padStart(2,'0')}`);
-    setShowCheck(true);
-  }
-  function moveMonthToTarget(sourceMonthKey, targetYear, targetMonth1to12) {
-    const targetKey = `${targetYear}-${String(targetMonth1to12).padStart(2,'0')}`;
-    const updated = transactions.map(t=>{
-      if(monthKeyFromDate(t.date) !== sourceMonthKey) return t;
-      const newDate = setDateToMonth(t.date, targetYear, targetMonth1to12 - 1);
-      return { ...t, date: newDate };
-    });
-    setTransactions(sortTransactions(updated));
-    if(monthFilter === sourceMonthKey) setMonthFilter(targetKey);
-    setShowCheck(true);
-  }
-  function deleteMonth(key) {
-    if(!confirm("Supprimer toutes les transactions de ce mois ? Cette action est irréversible.")) return;
-    const remaining = transactions.filter(t=>monthKeyFromDate(t.date)!==key);
-    setTransactions(sortTransactions(remaining));
-    if(monthFilter === key) setMonthFilter(monthKeyFromDate(new Date()));
-    setShowCheck(true);
-  }
+  const months=getMonthsWithData(transactions);
 
-  const months = getMonthsWithData(transactions);
-
-  return (
-    <div className="relative z-10 px-2 md:px-12 py-2 md:py-8 max-w-5xl mx-auto min-w-[680px]">
-      <Header />
-      <Dashboard
-        transactions={transactions}
-        metricsScope={metricsScope}
-        toggleMetricsScope={toggleMetricsScope}
-        onAddTx={()=>{setEditTx(null); setShowModal(true);}}
-        onExport={handleExport}
-        onImport={handleImport}
-        selectedMonthKey={monthFilter}
-      />
-      <TransactionList
-        transactions={transactions}
-        onEdit={tx=>{setEditTx(tx); setShowModal(true);}}
-        onDelete={handleDelete}
-        monthFilter={monthFilter}
-        setMonthFilter={setMonthFilter}
-        openHistory={()=>setHistoryOpen(true)}
-        openDuplicate={()=>setDupOpen(true)}
-      />
-      <AddOrEditModal show={showModal} onClose={()=>setShowModal(false)} onSave={handleAddOrEdit} tx={editTx}/>
-      <SettingsModal show={showSettings} onClose={()=>setShowSettings(false)}/>
-      <MonthHistoryModal
-        show={historyOpen} onClose={()=>setHistoryOpen(false)} months={months}
-        onShowMonth={(key)=>setMonthFilter(key)}
-        onCopyMonth={(key)=>{ const [y,m] = key.split('-').map(Number); const next = addMonthsClamped(new Date(y, m-1, 1), 1); duplicateMonthToTarget(key, next.getFullYear(), next.getMonth()+1); }}
-        onEditMonth={(key)=>{ setEditMonthSource(key); setEditMonthOpen(true); }}
-        onDeleteMonth={(key)=>deleteMonth(key)}
-      />
-      <DuplicationModal show={dupOpen} onClose={()=>setDupOpen(false)} months={months} defaultSourceKey={monthFilter} onDuplicate={(src, ty, tm)=>duplicateMonthToTarget(src, ty, tm)} />
-      <EditMonthModal show={editMonthOpen} onClose={()=>setEditMonthOpen(false)} sourceKey={editMonthSource} onApply={(src, ty, tm)=>moveMonthToTarget(src, ty, tm)} />
-      <SuccessCheckmark show={showCheck} />
-      <BadgeAchievement show={showBadge} type={badgeType}/>
-    </div>
-  );
+  return(<div className="relative z-10 px-2 md:px-12 py-2 md:py-8 max-w-5xl mx-auto min-w-[680px]">
+    <Header/>
+    <Dashboard transactions={transactions} metricsScope={metricsScope} toggleMetricsScope={()=>setMetricsScope(s=>s==='month'?'year':'month')} onAddTx={()=>{setEditTx(null);setShowModal(true)}} onExport={handleExport} onImport={handleImport} selectedMonthKey={monthFilter}/>
+    <TransactionList transactions={transactions} onEdit={tx=>{setEditTx(tx);setShowModal(true)}} onDelete={handleDelete} monthFilter={monthFilter} setMonthFilter={setMonthFilter} openHistory={()=>setHistoryOpen(true)} openDuplicate={()=>setDupOpen(true)}/>
+    <AddOrEditModal show={showModal} onClose={()=>setShowModal(false)} onSave={handleAddOrEdit} tx={editTx}/>
+    <SettingsModal show={showSettings} onClose={()=>setShowSettings(false)}/>
+    <MonthHistoryModal show={historyOpen} onClose={()=>setHistoryOpen(false)} months={months} onShowMonth={(key)=>setMonthFilter(key)} onCopyMonth={(key)=>{const[y,m]=key.split('-').map(Number);const next=addMonthsClamped(new Date(y,m-1,1),1);duplicateMonthToTarget(key,next.getFullYear(),next.getMonth()+1)}} onEditMonth={(key)=>{setEditMonthSource(key);setEditMonthOpen(true)}} onDeleteMonth={(key)=>deleteMonth(key)}/>
+    <DuplicationModal show={dupOpen} onClose={()=>setDupOpen(false)} months={months} defaultSourceKey={monthFilter} onDuplicate={(src,ty,tm)=>duplicateMonthToTarget(src,ty,tm)}/>
+    <EditMonthModal show={editMonthOpen} onClose={()=>setEditMonthOpen(false)} sourceKey={editMonthSource} onApply={(src,ty,tm)=>moveMonthToTarget(src,ty,tm)}/>
+    <SuccessCheckmark show={showCheck}/><BadgeAchievement show={showBadge} type={badgeType}/>
+  </div>)
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
