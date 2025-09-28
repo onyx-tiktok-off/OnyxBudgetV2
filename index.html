@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Onyx Budget V2</title>
+  <title>Onyx Budget V2.3</title>
 
   <!-- Favicon & Apple Touch Icon -->
   <link rel="icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
@@ -189,95 +189,138 @@
     });
   </script>
 
-  <script type="text/babel">
-/* ==================== Google Auth + Drive (AppData) ==================== */
-const GOOGLE = {
-  CLIENT_ID: "910313633485-js3ldfefrgtlc056i5t4go6r3b0ni0il.apps.googleusercontent.com",
-  SCOPES: "https://www.googleapis.com/auth/drive.appdata openid email profile"
-};
-
-let accessToken = null;
-let tokenClient = null;
-
-function initGoogleAuth() {
-  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE.CLIENT_ID,
-    scope: GOOGLE.SCOPES,
-    prompt: "",
-    callback: (resp) => {
-      accessToken = resp.access_token;
-      const inBtn = document.getElementById("googleSignIn");
-      const outBtn = document.getElementById("googleSignOut");
-      if (inBtn) inBtn.style.display = "none";
-      if (outBtn) outBtn.style.display = "inline-flex";
-      window.dispatchEvent(new Event("ONYX_SIGNED_IN"));
-    }
-  });
-}
-function signInWithGoogle(){ tokenClient?.requestAccessToken({prompt: "consent"}); }
-function signOutGoogle(){
-  if (accessToken && google?.accounts?.oauth2?.revoke) {
-    google.accounts.oauth2.revoke(accessToken, () => {});
+<script type="text/babel">
+  /* ==================== Google Auth + Drive (AppData) ==================== */
+  const GOOGLE = {
+    CLIENT_ID: "910313633485-js3ldfefrgtlc056i5t4go6r3b0ni0il.apps.googleusercontent.com",
+    SCOPES: "https://www.googleapis.com/auth/drive.appdata openid email profile"
+  };
+  
+  let accessToken = null;
+  let tokenClient = null;
+  let refreshTimer = null;
+  let accessTokenExpiry = 0; // timestamp ms
+  
+  function setUiSignedIn(signedIn){
+    const inBtn = document.getElementById("googleSignIn");
+    const outBtn = document.getElementById("googleSignOut");
+    if (inBtn) inBtn.style.display = signedIn ? "none" : "inline-flex";
+    if (outBtn) outBtn.style.display = signedIn ? "inline-flex" : "none";
   }
-  accessToken = null;
-  const inBtn = document.getElementById("googleSignIn");
-  const outBtn = document.getElementById("googleSignOut");
-  if (inBtn) inBtn.style.display = "inline-flex";
-  if (outBtn) outBtn.style.display = "none";
-  window.dispatchEvent(new Event("ONYX_SIGNED_OUT"));
-}
-window.signInWithGoogle = signInWithGoogle;
-window.signOutGoogle = signOutGoogle;
-
-async function driveRequest(url, opts = {}) {
-  if (!accessToken) throw new Error("Non authentifié");
-  const headers = Object.assign({}, opts.headers || {}, { Authorization: `Bearer ${accessToken}` });
-  const res = await fetch(url, { ...opts, headers });
-  if (!res.ok) throw new Error(await res.text());
-  return res;
-}
-
-async function ensureAppDataFileId() {
-  const listRes = await driveRequest(
-    "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name%20%3D%20%27onyx_transactions.json%27"
-  );
-  const data = await listRes.json();
-  if (data.files && data.files.length) return data.files[0].id;
-
-  const boundary = "-------314159265358979323846";
-  const delimiter = `--${boundary}\r\n`;
-  const closeDelim = `--${boundary}--`;
-
-  const metadata = { name: "onyx_transactions.json", parents: ["appDataFolder"] };
-  const body =
-    delimiter +
-    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-    JSON.stringify(metadata) + "\r\n" +
-    delimiter +
-    "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
-    "[]\r\n" +
-    closeDelim;
-
-  const createRes = await driveRequest(
-    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
-    { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body }
-  );
-  const created = await createRes.json();
-  return created.id;
-}
-async function loadTransactionsFromDrive() {
-  const fileId = await ensureAppDataFileId();
-  const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
-  return await res.json();
-}
-async function saveTransactionsToDrive(transactions) {
-  const fileId = await ensureAppDataFileId();
-  await driveRequest(
-    `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
-    { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(transactions) }
-  );
-}
+  
+  function scheduleSilentRefresh(expiresInSec=3600){
+    if (refreshTimer) clearTimeout(refreshTimer);
+    // On renouvelle 60s avant l’expiration (min 30s pour être safe)
+    const delayMs = Math.max((expiresInSec - 60), 30) * 1000;
+    refreshTimer = setTimeout(()=>{
+      // Silent renewal: pas de pop-up si la session Google est toujours active
+      tokenClient?.requestAccessToken({ prompt: "" });
+    }, delayMs);
+  }
+  
+  function initGoogleAuth() {
+    if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE.CLIENT_ID,
+      scope: GOOGLE.SCOPES,
+      prompt: "", // autorise les requêtes "silencieuses" après consentement initial
+      callback: (resp) => {
+        // Quand on reçoit un token (après clic OU renouvellement silencieux)
+        accessToken = resp.access_token;
+        const expires = Number(resp.expires_in || 3600);
+        accessTokenExpiry = Date.now() + expires*1000;
+  
+        localStorage.setItem("onyx_google_authed", "1"); // persiste l’état "connecté"
+        setUiSignedIn(true);
+        window.dispatchEvent(new Event("ONYX_SIGNED_IN")); // charge depuis Drive la 1ère fois
+  
+        scheduleSilentRefresh(expires);
+      }
+    });
+  
+    // Tentative de reconnexion silencieuse AU CHARGEMENT si on était déjà connecté
+    if (localStorage.getItem("onyx_google_authed") === "1") {
+      // token sans prompt → pas de fenêtrage si la session Google est valide
+      tokenClient.requestAccessToken({ prompt: "" });
+    }
+  
+    // Bonus: si l’onglet redevient visible et qu’on est proche de l’expiration, on renouvelle
+    document.addEventListener("visibilitychange", ()=>{
+      if (document.visibilityState === "visible" && accessToken) {
+        const remaining = accessTokenExpiry - Date.now();
+        if (remaining < 90*1000) { // < 90s restants → on rafraîchit en silence
+          tokenClient?.requestAccessToken({ prompt: "" });
+        }
+      }
+    });
+  }
+  
+  function signInWithGoogle(){
+    // 1er consentement uniquement → popup
+    tokenClient?.requestAccessToken({ prompt: "consent" });
+  }
+  
+  function signOutGoogle(){
+    try { accessToken && google?.accounts?.oauth2?.revoke?.(accessToken, ()=>{}); } catch {}
+    accessToken = null;
+    accessTokenExpiry = 0;
+    if (refreshTimer) clearTimeout(refreshTimer);
+    localStorage.removeItem("onyx_google_authed");
+    setUiSignedIn(false);
+    window.dispatchEvent(new Event("ONYX_SIGNED_OUT"));
+  }
+  
+  window.signInWithGoogle = signInWithGoogle;
+  window.signOutGoogle = signOutGoogle;
+  
+  async function driveRequest(url, opts = {}) {
+    if (!accessToken) throw new Error("Non authentifié");
+    const headers = Object.assign({}, opts.headers || {}, { Authorization: `Bearer ${accessToken}` });
+    const res = await fetch(url, { ...opts, headers });
+    if (!res.ok) throw new Error(await res.text());
+    return res;
+  }
+  
+  async function ensureAppDataFileId() {
+    const listRes = await driveRequest(
+      "https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&fields=files(id,name)&q=name%20%3D%20%27onyx_transactions.json%27"
+    );
+    const data = await listRes.json();
+    if (data.files && data.files.length) return data.files[0].id;
+  
+    const boundary = "-------314159265358979323846";
+    const delimiter = `--${boundary}\r\n`;
+    const closeDelim = `--${boundary}--`;
+  
+    const metadata = { name: "onyx_transactions.json", parents: ["appDataFolder"] };
+    const body =
+      delimiter +
+      "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+      JSON.stringify(metadata) + "\r\n" +
+      delimiter +
+      "Content-Type: application/json; charset=UTF-8\r\n\r\n" +
+      "[]\r\n" +
+      closeDelim;
+  
+    const createRes = await driveRequest(
+      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+      { method: "POST", headers: { "Content-Type": `multipart/related; boundary=${boundary}` }, body }
+    );
+    const created = await createRes.json();
+    return created.id;
+  }
+  async function loadTransactionsFromDrive() {
+    const fileId = await ensureAppDataFileId();
+    const res = await driveRequest(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+    return await res.json();
+  }
+  async function saveTransactionsToDrive(transactions) {
+    const fileId = await ensureAppDataFileId();
+    await driveRequest(
+      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`,
+      { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(transactions) }
+    );
+  }
 
 /* ==================== App ==================== */
 /* Utilitaire Lucide */
