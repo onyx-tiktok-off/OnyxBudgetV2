@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Onyx Budget V2</title>
 
-  <!-- Favicon & Apple Touch Icon -->
+  <!-- Favicon & Apple Touch Icon (logo du site) -->
   <link rel="icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
   <link rel="shortcut icon" type="image/png" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
   <link rel="apple-touch-icon" href="https://i.ibb.co/5WMnx7y6/8ba349756916.png">
@@ -18,29 +18,76 @@
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <style>
+    :root{
+      --bg-start: #0a0a0a;
+      --bg-end:   #1a0033;
+      --text: #ffffff;
+
+      --primary:  #6366f1;
+      --primary-contrast: #ffffff;
+      --secondary:#00d9ff;
+      --accent:   #ff006e;
+      --success:  #10b981;
+      --danger:   #ef4444;
+
+      --glass-bg: rgba(255,255,255,0.05);
+      --glass-br: rgba(255,255,255,0.15);
+      --shadow-1: 0 4px 48px 8px rgba(99,102,241,0.12);
+      --shadow-2: 0 2px 8px rgba(0,217,255,0.12);
+
+      --scrollbar-track: rgba(26,0,51,0.5);
+      --scrollbar-thumb-from: #6366f1;
+      --scrollbar-thumb-to:   #00d9ff;
+
+      --selection-bg: #6366f1;
+      --icon-calendar: #ffffff;
+    }
+    .theme-red {
+      --bg-start: #000000;
+      --bg-end:   #1a0006;
+
+      --primary:  #ef4444;
+      --primary-contrast: #ffffff;
+      --secondary:#dc2626;
+      --accent:   #f43f5e;
+      --success:  #16a34a;
+      --danger:   #ef4444;
+
+      --glass-bg: rgba(255,255,255,0.04);
+      --glass-br: rgba(255,255,255,0.12);
+      --shadow-1: 0 4px 48px 8px rgba(239,68,68,0.12);
+      --shadow-2: 0 2px 8px rgba(244,63,94,0.12);
+
+      --scrollbar-track: rgba(38,0,8,0.55);
+      --scrollbar-thumb-from: #ef4444;
+      --scrollbar-thumb-to:   #f43f5e;
+
+      --selection-bg: #ef4444;
+      --icon-calendar: #ffffff;
+    }
+
     html, body {
       min-height: 100vh;
       font-family: 'Inter', 'Montserrat', Arial, sans-serif;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a0033 100%);
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
       overflow-x: auto;
       font-size: 16px;
+      color: var(--text);
     }
     .glass {
-      background: rgba(255,255,255,0.05);
-      border: 1.5px solid rgba(255,255,255,0.15);
-      box-shadow: 0 4px 48px 8px rgba(99,102,241,0.12), 0 2px 8px rgba(0,217,255,0.12);
+      background: var(--glass-bg);
+      border: 1.5px solid var(--glass-br);
+      box-shadow: var(--shadow-1), var(--shadow-2);
       backdrop-filter: blur(24px);
       border-radius: 2rem;
     }
-    select, select option, select optgroup {
-      background: #18181b !important;
-      color: #fff !important;
-    }
-    ::-webkit-scrollbar {width: 8px;background: rgba(26,0,51,0.5);}
-    ::-webkit-scrollbar-thumb {background: linear-gradient(135deg, #6366f1 0, #00d9ff 100%);border-radius: 4px;}
-    ::selection { background: #6366f1 !important; color: #fff !important; }
-    input::selection, textarea::selection { background: #6366f1 !important; color: #fff !important; }
+    select, select option, select optgroup { background: #18181b !important; color: #fff !important; }
+    ::-webkit-scrollbar {width: 8px;background: var(--scrollbar-track);}
+    ::-webkit-scrollbar-thumb {background: linear-gradient(135deg, var(--scrollbar-thumb-from) 0, var(--scrollbar-thumb-to) 100%);border-radius: 4px;}
+    ::selection, input::selection, textarea::selection { background: var(--selection-bg) !important; color: #fff !important; }
+
     .onyx-header { background: transparent !important; border: none !important; box-shadow: none !important; backdrop-filter: none !important; border-radius: 0 !important; }
     .onyx-title {
       font-family: 'Montserrat', 'Inter', Arial, sans-serif;
@@ -60,24 +107,71 @@
     @media (max-width:600px) {.onyx-title { font-size: 1.3rem;}}
     @media (max-width: 680px) {html, body { font-size: 15px; }}
     .menu-categories button, .menu-categories span, .menu-categories { color: #fff !important; }
+
+    .btn { display:inline-flex; align-items:center; gap:.5rem; font-weight:700; color:var(--primary-contrast); background:var(--primary);
+           padding:.5rem 1rem; border-radius: .75rem; transition: opacity .2s ease, transform .05s ease; }
+    .btn:hover{ opacity:.92 } .btn:active{ transform: translateY(1px) }
+    .btn-secondary{ background: var(--secondary); color:#fff; }
+    .btn-danger{ background: var(--danger); color:#fff; }
+    .btn-ghost{ background: rgba(255,255,255,.1); color:#fff;}
+    .chip-scope{ background: rgba(255,255,255,.1); color:#fff; font-size:10px; padding:.15rem .5rem; border-radius: 999px; }
+
+    [data-lucide="calendar"],
+    [data-lucide="calendar-days"],
+    [data-lucide="calendar-check"],
+    [data-lucide="calendar-range"] { color: var(--icon-calendar) !important; }
+
     .badge-anim-pop { animation: badgePop 0.72s cubic-bezier(.65,-0.3,.63,1.36); }
-    @keyframes badgePop {
-      0% { transform: scale(0.5) rotate(-20deg); opacity:0; }
-      60% { transform: scale(1.15) rotate(8deg); opacity:1; }
-      90% { transform: scale(1) rotate(-2deg); }
-      100% { transform: scale(1) rotate(0); }
-    }
+    @keyframes badgePop { 0% { transform: scale(0.5) rotate(-20deg); opacity:0; } 60% { transform: scale(1.15) rotate(8deg); opacity:1; } 90% { transform: scale(1) rotate(-2deg);} 100% { transform: scale(1) rotate(0);} }
     .check-anim { animation: checkMark 1.2s cubic-bezier(.57,2.2,.34,.97); }
-    @keyframes checkMark {
-      0%{ transform:scale(0) rotate(-40deg); }
-      50%{ transform:scale(1.2) rotate(8deg); }
-      75%{ transform:scale(.92) rotate(-4deg); }
-      100%{ transform:scale(1) rotate(0); }
+    @keyframes checkMark { 0%{ transform:scale(0) rotate(-40deg);} 50%{ transform:scale(1.2) rotate(8deg);} 75%{ transform:scale(.92) rotate(-4deg);} 100%{ transform:scale(1) rotate(0);} }
+
+    .theme-toggle {
+      position: fixed; top: 12px; left: 12px; z-index: 60; width: 42px; height: 42px; border-radius: 999px;
+      display:flex; align-items:center; justify-content:center;
+      background: var(--glass-bg); border: 1.5px solid var(--glass-br); box-shadow: var(--shadow-1); backdrop-filter: blur(12px); color:#fff;
+      cursor: pointer;
     }
+    .theme-toggle:hover { outline: 2px solid rgba(255,255,255,.12); }
   </style>
 </head>
 <body>
+  <!-- Bouton de bascule de thème -->
+  <button id="themeBtn" class="theme-toggle" title="Changer de thème">
+    <i data-lucide="palette"></i>
+  </button>
+
   <div id="root"></div>
+
+  <script>
+    /* ======= Thème: lecture au démarrage + binding immédiat ======= */
+    (function initTheme(){
+      const saved = localStorage.getItem('onyx_theme');
+      if(saved==='red'){ document.documentElement.classList.add('theme-red'); }
+      // Icones initiales
+      if (window.lucide) window.lucide.createIcons();
+
+      function toggleTheme(){
+        const el = document.documentElement;
+        const isRed = el.classList.toggle('theme-red');
+        localStorage.setItem('onyx_theme', isRed ? 'red' : 'default');
+        if (window.lucide) window.lucide.createIcons();
+      }
+
+      // Attache IMMÉDIATEMENT l'écouteur (sans attendre DOMContentLoaded)
+      var btn = document.getElementById('themeBtn');
+      if (btn) {
+        btn.addEventListener('click', toggleTheme);
+      } else {
+        // Cas extrême: si le bouton n’est pas encore là, on réessaie très vite
+        const iv = setInterval(()=>{
+          btn = document.getElementById('themeBtn');
+          if (btn) { btn.addEventListener('click', toggleTheme); clearInterval(iv); }
+        }, 50);
+        setTimeout(()=>clearInterval(iv), 2000);
+      }
+    })();
+  </script>
 
   <script type="text/babel">
 /* Utilitaire Lucide */
@@ -138,7 +232,6 @@ const formatDate = (d) => new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",
 const sum = (arr, fn) => arr.reduce((acc,cur)=>acc+fn(cur),0);
 const randomId = () => Math.random().toString(36).slice(2,10);
 
-/* Helpers normalisation + liens */
 function normalizeString(str) {
   return (str||"").normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
@@ -150,7 +243,6 @@ function normalizeUrl(u) {
   return s;
 }
 
-/* Tri revenus > dépenses */
 function sortTransactions(arr) {
   if (!Array.isArray(arr)) return [];
   const income = arr.filter(t => t.type === "income").sort((a,b)=>b.amount - a.amount);
@@ -163,7 +255,7 @@ function monthKeyFromDate(d) {
   const dt = new Date(d);
   const y = dt.getFullYear();
   const m = String(dt.getMonth()+1).padStart(2,'0');
-  return `${y}-${m}`; // ex: 2025-09
+  return `${y}-${m}`;
 }
 function formatMonthLabel(key) {
   const [y,m] = key.split('-').map(n=>+n);
@@ -207,35 +299,33 @@ function isCurrentYear(date) {
   return d.getFullYear()===now.getFullYear();
 }
 
-/* ---------- BADGE ACHIEVEMENT ---------- */
+/* ---------- BADGE ---------- */
 function BadgeAchievement({show, onClose, type}) {
   if(!show) return null;
-  let label, color, icon;
-  if(type==="first_income") {label="Premier revenu !";color="#10b981";icon="wallet";}
-  else if(type==="first_saving") {label="Première épargne !";color="#ff006e";icon="piggy-bank";}
+  let label, icon;
+  if(type==="first_income") {label="Premier revenu !";icon="wallet";}
+  else if(type==="first_saving") {label="Première épargne !";icon="piggy-bank";}
   else {return null;}
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
       <div className="badge-anim-pop flex flex-col items-center px-6 py-4 rounded-3xl shadow-2xl border-2 border-white/10 glass"
         style={{background:"linear-gradient(135deg,rgba(20,20,36,0.97),rgba(10,0,32,0.85))"}}
       >
-        <Lucide icon={icon} size={48} color={color} />
+        <Lucide icon={icon} />
         <span className="mt-3 text-lg font-bold text-white">{label}</span>
-        <span className="mt-1 px-3 py-1 rounded-lg text-xs" style={{background:color+"22", color}}>{type==="first_income" ? "Bravo pour ton premier revenu !" : "Épargner, c'est gagner."}</span>
+        <span className="mt-1 px-3 py-1 rounded-lg text-xs" style={{background:"rgba(255,255,255,.08)"}}>{type==="first_income" ? "Bravo pour ton premier revenu !" : "Épargner, c'est gagner."}</span>
       </div>
     </div>
   );
 }
-
-/* ---------- CHECKMARK ANIM ----------- */
 function SuccessCheckmark({show}) {
   if(!show) return null;
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
       <div className="check-anim bg-white/90 rounded-full shadow-2xl flex items-center justify-center" style={{width:96,height:96}}>
         <svg width="64" height="64" viewBox="0 0 52 52">
-          <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" strokeWidth="5"/>
-          <path fill="none" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16"/>
+          <circle cx="26" cy="26" r="25" fill="none" stroke="var(--success)" strokeWidth="5"/>
+          <path fill="none" stroke="var(--success)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16"/>
         </svg>
       </div>
     </div>
@@ -245,7 +335,7 @@ function SuccessCheckmark({show}) {
 /* ------------- HEADER --------------- */
 function Header() {
   return (
-    <header className="onyx-header flex items-center px-6 py-5 mb-4" style={{zIndex:20, position:"relative", minHeight:"80px"}}>
+    <header className="onyx-header flex items-center px-14 py-5 mb-4" style={{zIndex:20, position:"relative", minHeight:"80px"}}>
       <div className="flex items-center gap-5">
         <img src="https://i.ibb.co/5WMnx7y6/8ba349756916.png"
           alt="Onyx Budget"
@@ -279,74 +369,65 @@ function MetricsCards({transactions, scope, toggleScope}) {
     <div className="grid grid-cols-4 gap-4 my-4 overflow-x-auto min-w-[680px]">
       <div className="glass p-4 md:p-6 shadow-xl">
         <div className="flex items-center gap-2">
-          <Lucide icon="credit-card" color="#6366f1"/>
+          <Lucide icon="credit-card"/>
           <span className="uppercase text-xs opacity-60 text-white">SOLDE</span>
-          <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/80">
+          <span className="ml-auto chip-scope">
             {scopeIsYear ? `Année ${year}` : `Mois courant`}
           </span>
         </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center text-white">
-          {formatAmount(balance)}
-        </div>
-        <button
-          className="mt-2 text-xs px-2 py-1 rounded-lg bg-[#00d9ff]/20 hover:bg-[#00d9ff]/30 text-white transition"
+        <div className="font-bold text-2xl md:text-3xl mt-2 flex items-center">{formatAmount(balance)}</div>
+        <button className="mt-2 btn btn-secondary text-xs px-2 py-1"
           onClick={toggleScope}
           title={scopeIsYear ? "Revenir au mois courant" : "Voir les totaux de l'année en cours"}
         >
-          {scopeIsYear ? "Afficher le mois courant" : `Afficher l'année ${year}`}
+          <Lucide icon="refresh-ccw"/>{scopeIsYear ? "Afficher le mois" : `Afficher l'année ${year}`}
         </button>
       </div>
 
       <div className="glass p-4 md:p-6 shadow-xl">
         <div className="flex items-center gap-2">
-          <Lucide icon="download" color="#10b981"/>
-          <span className="uppercase text-xs opacity-60 text-white">REVENUS</span>
+          <Lucide icon="download" />
+          <span className="uppercase text-xs opacity-60">REVENUS</span>
         </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(totalIncome)}</div>
+        <div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(totalIncome)}</div>
       </div>
 
       <div className="glass p-4 md:p-6 shadow-xl">
         <div className="flex items-center gap-2">
-          <Lucide icon="upload" color="#ef4444"/>
-          <span className="uppercase text-xs opacity-60 text-white">DÉPENSES</span>
+          <Lucide icon="upload"/>
+          <span className="uppercase text-xs opacity-60">DÉPENSES</span>
         </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(totalExpense)}</div>
+        <div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(totalExpense)}</div>
       </div>
 
       <div className="glass p-4 md:p-6 shadow-xl">
         <div className="flex items-center gap-2">
-          <Lucide icon="piggy-bank" color="#ff006e"/>
-          <span className="uppercase text-xs opacity-60 text-white">ÉCONOMIES</span>
+          <Lucide icon="piggy-bank"/>
+          <span className="uppercase text-xs opacity-60">ÉCONOMIES</span>
         </div>
-        <div className="font-bold text-2xl md:text-3xl mt-2 text-white">{formatAmount(savings)}</div>
+        <div className="font-bold text-2xl md:text-3xl mt-2">{formatAmount(savings)}</div>
       </div>
     </div>
   );
 }
 
-/* ------------- GRAPHIQUE PREMIUM ----------- */
+/* ------------- GRAPHIQUE ----------- */
 function getMonthDays(startDate, transactions) {
   const txSorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
   let firstDate = startDate;
-  if (txSorted.length) {
-    firstDate = new Date(txSorted[0].date);
-  }
+  if (txSorted.length) firstDate = new Date(txSorted[0].date);
   const year = firstDate.getFullYear();
   const month = firstDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const days = [];
-  for(let i=1; i<=daysInMonth; i++) {
-    days.push(new Date(year, month, i));
-  }
+  for(let i=1; i<=daysInMonth; i++) days.push(new Date(year, month, i));
   return days;
 }
 function getDailyBalances(transactions) {
   if (!transactions.length) return {labels:[], data:[]};
   const monthDays = getMonthDays(new Date(), transactions);
   const sorted = [...transactions].sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let balances = [];
-  let current = 0;
-  let idx = 0;
+  let balances = []; let current = 0; let idx = 0;
   monthDays.forEach(day=>{
     while (idx<sorted.length && (new Date(sorted[idx].date)).toDateString() === day.toDateString()) {
       current += (sorted[idx].type==="income"?+sorted[idx].amount:-+sorted[idx].amount);
@@ -370,12 +451,11 @@ function PremiumChart({transactions}) {
       const ctx = chartRef.current.getContext("2d");
       if(window.myChart) window.myChart.destroy();
       let gradient = ctx.createLinearGradient(0,0,0,200);
-      gradient.addColorStop(0, "#00d9ffbb");
-      gradient.addColorStop(1, "#1a003380");
+      gradient.addColorStop(0, "rgba(255,255,255,0.25)");
+      gradient.addColorStop(1, "rgba(255,255,255,0.05)");
       let gradientLine = ctx.createLinearGradient(0,0,chartRef.current.width,0);
-      gradientLine.addColorStop(0,"#00d9ff");
-      gradientLine.addColorStop(0.5,"#6366f1");
-      gradientLine.addColorStop(1,"#ff006e");
+      gradientLine.addColorStop(0,"#ffffff");
+      gradientLine.addColorStop(1,"#dddddd");
       window.myChart = new window.Chart(ctx, {
         type:"line",
         data:{
@@ -387,11 +467,11 @@ function PremiumChart({transactions}) {
             borderWidth: 3,
             borderColor: gradientLine,
             backgroundColor: gradient,
-            pointRadius: data.length>1 ? 5 : 12,
-            pointBackgroundColor: "#00d9ff",
+            pointRadius: data.length>1 ? 4 : 10,
+            pointBackgroundColor: "#ffffff",
             pointBorderWidth: 2,
-            pointBorderColor: "#fff",
-            pointHoverRadius: 15,
+            pointBorderColor: "#00000033",
+            pointHoverRadius: 12,
             tension: 0.44,
           }]
         },
@@ -421,22 +501,16 @@ function PremiumChart({transactions}) {
             y:{
               min: 0,
               max: totalRevenus > 0 ? Math.ceil(totalRevenus/10)*10 : undefined,
-              ticks:{
-                color:"#fff",
-                font:{size:15, weight:700},
-                callback: function(value) { return formatAmount(value);}
-              },
-              grid:{color:"rgba(99,102,241,0.10)", lineWidth:1.2},
-              border:{color:"rgba(99,102,241,0.17)"},
+              ticks:{ color:"#fff", font:{size:15, weight:700}, callback: (v)=>formatAmount(v) },
+              grid:{color:"rgba(255,255,255,0.10)", lineWidth:1.2},
+              border:{color:"rgba(255,255,255,0.17)"},
               beginAtZero:true,
             },
             x:{
               ticks:{color:"#fff", font:{size:14}},
-              grid:{color:"rgba(99,102,241,0.07)",drawOnChartArea:false},
-              border:{color:"rgba(99,102,241,0.17)"},
-              autoSkip: false,
-              maxRotation: 0,
-              minRotation: 0
+              grid:{color:"rgba(255,255,255,0.07)",drawOnChartArea:false},
+              border:{color:"rgba(255,255,255,0.17)"},
+              autoSkip: false, maxRotation: 0, minRotation: 0
             }
           },
           interaction: { mode: 'nearest', intersect: true },
@@ -450,23 +524,16 @@ function PremiumChart({transactions}) {
     <div className="relative" style={{minHeight:220}}>
       <canvas ref={chartRef} height={110}></canvas>
       {hoverPoint && (
-        <div
-          className="absolute z-20 pointer-events-none"
-          style={{
-            left: `calc(${(hoverPoint.index/(labels.length-1||1))*100}% - 48px)`,
-            top: 15,
-            minWidth: '88px'
-          }}>
-          <div className="rounded-2xl bg-[#1a0033] border border-[#6366f1] shadow-lg px-4 py-2 text-white text-center text-base font-bold transition" style={{filter:'drop-shadow(0 2px 12px #6366f1bb)'}}>
+        <div className="absolute z-20 pointer-events-none" style={{left: `calc(${(hoverPoint.index/(labels.length-1||1))*100}% - 48px)`, top: 15, minWidth: '88px'}}>
+          <div className="rounded-2xl bg-black/50 border border-white/20 shadow-lg px-4 py-2 text-white text-center text-base font-bold transition">
             {formatAmount(hoverPoint.value)}
             <div className="text-xs text-white/70">{hoverPoint.label}</div>
           </div>
         </div>
       )}
-      {
-        (!transactions || transactions.length===0) &&
+      {(!transactions || transactions.length===0) &&
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white/40 text-xl font-bold pointer-events-none select-none" style={{letterSpacing:1}}>
-          <Lucide icon="moon" size={48} color="#6366f1" />
+          <Lucide icon="moon" />
           <span className="mt-3">Aucune donnée</span>
         </div>
       }
@@ -486,13 +553,9 @@ function Dashboard({transactions, metricsScope, toggleMetricsScope, onAddTx, onE
         </div>
       </div>
       <div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}>
-        <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover transition shadow-lg" onClick={onAddTx}>
-          <Lucide icon="plus-circle"/> Ajouter transaction
-        </button>
-        <button className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover" onClick={onExport}>
-          <Lucide icon="download" /> Exporter JSON
-        </button>
-        <label className="bg-[#6366f1] text-white font-bold px-5 py-2 rounded-xl neon-hover cursor-pointer flex items-center gap-2">
+        <button className="btn" onClick={onAddTx}><Lucide icon="plus-circle"/> Ajouter transaction</button>
+        <button className="btn" onClick={onExport}><Lucide icon="download" /> Exporter JSON</button>
+        <label className="btn cursor-pointer">
           <Lucide icon="upload" /> Importer JSON
           <input type="file" accept=".json" className="hidden" onChange={onImport}/>
         </label>
@@ -512,12 +575,8 @@ function CategorySelect({cat, setCat, categories}) {
   }, [showCatMenu]);
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10"
-        onClick={()=>setShowCatMenu(x=>!x)}
-        tabIndex={-1}
-      >
+      <button type="button" className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10"
+        onClick={()=>setShowCatMenu(x=>!x)} tabIndex={-1}>
         <span className="flex items-center gap-2">
           <Lucide icon={categories.find(c=>c.name===cat)?.icon || "circle"} color={categories.find(c=>c.name===cat)?.color || "#fff"} size={20}/>
           {cat}
@@ -527,14 +586,8 @@ function CategorySelect({cat, setCat, categories}) {
       {showCatMenu && (
         <div className="absolute z-50 w-full bg-black rounded-xl mt-1 border border-white/10 max-h-60 overflow-y-auto menu-categories">
           {categories.map(c=>(
-            <button type="button"
-              key={c.name}
-              className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
-              onClick={()=>{
-                setCat(c.name);
-                setShowCatMenu(false);
-              }}
-            >
+            <button type="button" key={c.name} className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
+              onClick={()=>{ setCat(c.name); setShowCatMenu(false); }}>
               <Lucide icon={c.icon} color={c.color} size={20}/>
               <span className="text-white">{c.name}</span>
             </button>
@@ -556,40 +609,25 @@ function CategoryFilter({cat, setCat, transactions}) {
   const uniqueCats = Array.from(new Set(transactions.map(t=>t.category.name)));
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
-        onClick={()=>setShowCatMenu(x=>!x)}
-      >
+      <button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
+        onClick={()=>setShowCatMenu(x=>!x)}>
         {cat==="all"
           ? <><Lucide icon="list" size={18}/> Toutes catégories</>
-          : <>
-              <Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon || "circle"} color={transactions.find(t=>t.category.name===cat)?.category.color || "#fff"} size={18}/>
-              {cat}
-            </>
+          : <><Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon || "circle"} color={transactions.find(t=>t.category.name===cat)?.category.color || "#fff"} size={18}/>{cat}</>
         }
         <Lucide icon="chevron-down" size={16}/>
       </button>
       {showCatMenu && (
         <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w=[190px] max-h-60 overflow-y-auto menu-categories">
-          <button type="button"
-            className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
-            onClick={()=>{
-              setCat("all");
-              setShowCatMenu(false);
-            }}
-          ><Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span></button>
+          <button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
+            onClick={()=>{ setCat("all"); setShowCatMenu(false); }}>
+            <Lucide icon="list" size={18}/> <span className="text-white">Toutes catégories</span>
+          </button>
           {uniqueCats.map(c=>{
             const catObj = transactions.find(t=>t.category.name===c)?.category;
             return (
-              <button type="button"
-                className="flex items-center gap-2 px-4 py-2 w-full hover:bg-[#6366f1]/10 text-left text-white"
-                key={c}
-                onClick={()=>{
-                  setCat(c);
-                  setShowCatMenu(false);
-                }}
-              >
+              <button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white"
+                key={c} onClick={()=>{ setCat(c); setShowCatMenu(false); }}>
                 <Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/>
                 <span className="text-white">{c}</span>
               </button>
@@ -613,30 +651,23 @@ function MonthFilter({monthFilter, setMonthFilter, months}) {
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        type="button"
-        className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
-        onClick={()=>setOpen(v=>!v)}
-      >
-        <Lucide icon="calendar" size={18} color="#fff"/>
+      <button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10"
+        onClick={()=>setOpen(v=>!v)}>
+        <Lucide icon="calendar" size={18}/>
         {monthFilter==='all' ? 'Tous les mois' : formatMonthLabel(monthFilter)}
         <Lucide icon="chevron-down" size={16}/>
       </button>
       {open && (
         <div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w-[220px] max-h-72 overflow-y-auto">
-          <button
-            className="w-full text-left px-4 py-2 hover:bg-[#6366f1]/10 text-white flex items-center gap-2"
-            onClick={()=>{setMonthFilter('all'); setOpen(false);}}
-          >
+          <button className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center gap-2"
+            onClick={()=>{setMonthFilter('all'); setOpen(false);}}>
             <Lucide icon="list" size={18}/> Tous les mois
           </button>
           {months.map(m=>(
-            <button key={m.key}
-              className="w-full text-left px-4 py-2 hover:bg-[#6366f1]/10 text-white flex items-center justify-between"
-              onClick={()=>{setMonthFilter(m.key); setOpen(false);}}
-            >
+            <button key={m.key} className="w-full text-left px-4 py-2 hover:bg-white/10 text-white flex items-center justify-between"
+              onClick={()=>{setMonthFilter(m.key); setOpen(false);}}>
               <span className="flex items-center gap-2">
-                <Lucide icon="calendar-days" size={18} color="#fff"/>
+                <Lucide icon="calendar-days" size={18}/>
                 {m.label}
               </span>
               <span className="text-xs text-white/60">{m.count}</span>
@@ -654,17 +685,17 @@ function MonthHistoryModal({show, onClose, months, onShowMonth, onCopyMonth, onE
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="glass max-w-2xl w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
         <h2 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
-          <Lucide icon="history" color="#fff"/> Historique des mois
+          <Lucide icon="history"/> Historique des mois
         </h2>
         {months.length ? (
           <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {months.map(m=>(
-              <div key={m.key} className="flex items-center justify-between bg-white/5 rounded-xl px-3 py-3 border border-white/10">
+              <div key={m.key} className="flex items-center justify-between bg:white/5 rounded-xl px-3 py-3 border border-white/10" style="background: rgba(255,255,255,.05);">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-[#6366f1]/20 flex items-center justify-center">
-                    <Lucide icon="calendar-check" color="#fff" />
+                  <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                    <Lucide icon="calendar-check" />
                   </div>
                   <div>
                     <div className="text-white font-semibold">{m.label}</div>
@@ -672,33 +703,17 @@ function MonthHistoryModal({show, onClose, months, onShowMonth, onCopyMonth, onE
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-wrap justify-end">
-                  <button
-                    className="px-3 py-2 rounded-xl bg-[#00d9ff] text-white font-bold hover:opacity-90"
-                    onClick={()=>{onShowMonth(m.key); onClose();}}
-                    title="Afficher dans le tableau"
-                  >
-                    <div className="flex items-center gap-1"><Lucide icon="eye"/><span>Afficher</span></div>
+                  <button className="btn btn-secondary" onClick={()=>{onShowMonth(m.key); onClose();}} title="Afficher dans le tableau">
+                    <Lucide icon="eye"/><span>Afficher</span>
                   </button>
-                  <button
-                    className="px-3 py-2 rounded-xl bg-[#6366f1] text-white font-bold hover:opacity-90"
-                    onClick={()=>onCopyMonth(m.key)}
-                    title="Copier toutes les transactions vers le mois suivant"
-                  >
-                    <div className="flex items-center gap-1"><Lucide icon="copy"/><span>Copier → mois suivant</span></div>
+                  <button className="btn" onClick={()=>onCopyMonth(m.key)} title="Copier toutes les transactions vers le mois suivant">
+                    <Lucide icon="copy"/><span>Copier → mois suivant</span>
                   </button>
-                  <button
-                    className="px-3 py-2 rounded-xl bg-white/10 text-white font-bold hover:bg-white/15"
-                    onClick={()=>onEditMonth(m.key)}
-                    title="Modifier la date du mois"
-                  >
-                    <div className="flex items-center gap-1"><Lucide icon="calendar-range" color="#fff"/><span>Modifier date</span></div>
+                  <button className="btn btn-ghost" onClick={()=>onEditMonth(m.key)} title="Modifier la date du mois">
+                    <Lucide icon="calendar-range"/><span>Modifier date</span>
                   </button>
-                  <button
-                    className="px-3 py-2 rounded-xl bg-[#ef4444] text-white font-bold hover:opacity-90"
-                    onClick={()=>onDeleteMonth(m.key)}
-                    title="Supprimer toutes les transactions de ce mois"
-                  >
-                    <div className="flex items-center gap-1"><Lucide icon="trash-2"/><span>Supprimer</span></div>
+                  <button className="btn btn-danger" onClick={()=>onDeleteMonth(m.key)} title="Supprimer toutes les transactions de ce mois">
+                    <Lucide icon="trash-2"/><span>Supprimer</span>
                   </button>
                 </div>
               </div>
@@ -723,14 +738,12 @@ function DuplicationModal({show, onClose, months, defaultSourceKey, onDuplicate}
     const ym = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;
     return ym;
   });
-
   React.useEffect(()=>{ setSource(defaultSourceKey); },[defaultSourceKey]);
-
   if(!show) return null;
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="glass max-w-md w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Lucide icon="copy"/> Dupliquer des transactions
         </h2>
@@ -745,24 +758,17 @@ function DuplicationModal({show, onClose, months, defaultSourceKey, onDuplicate}
           </div>
           <div>
             <label className="block text-white/70 mb-1">Mois cible</label>
-            <input
-              type="month"
-              value={target}
-              onChange={e=>setTarget(e.target.value)}
-              className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"
-            />
+            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
             <p className="text-xs text-white/60 mt-1">Exemple : 2025-10 pour octobre 2025.</p>
           </div>
-          <button
-            className="w-full py-2 font-bold rounded-xl neon-hover text-white bg-[#00d9ff] transition"
+          <button className="btn btn-secondary w-full justify-center"
             onClick={()=>{
               if(!source || !target){ return; }
               const [ty, tm] = target.split('-').map(Number);
               onDuplicate(source, ty, tm);
               onClose();
-            }}
-          >
-            Dupliquer
+            }}>
+            <Lucide icon="check-circle2"/> Dupliquer
           </button>
         </div>
       </div>
@@ -774,36 +780,28 @@ function DuplicationModal({show, onClose, months, defaultSourceKey, onDuplicate}
 function EditMonthModal({show, onClose, sourceKey, onApply}) {
   const [target, setTarget] = React.useState(sourceKey || monthKeyFromDate(new Date()));
   React.useEffect(()=>{ setTarget(sourceKey || monthKeyFromDate(new Date())); }, [sourceKey, show]);
-
   if(!show) return null;
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="glass max-w-md w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-          <Lucide icon="calendar-range" color="#fff"/> Modifier la date du mois
+          <Lucide icon="calendar-range"/> Modifier la date du mois
         </h2>
         <div className="space-y-4">
           <div className="text-white/80 text-sm">Mois source : <span className="font-semibold">{formatMonthLabel(sourceKey||'')}</span></div>
           <div>
             <label className="block text-white/70 mb-1">Nouveau mois</label>
-            <input
-              type="month"
-              value={target}
-              onChange={e=>setTarget(e.target.value)}
-              className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none"
-            />
+            <input type="month" value={target} onChange={e=>setTarget(e.target.value)} className="w-full bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
           </div>
-          <button
-            className="w-full py-2 font-bold rounded-xl neon-hover text-white bg-[#00d9ff] transition"
+          <button className="btn btn-secondary w-full justify-center"
             onClick={()=>{
               if(!sourceKey || !target) return;
               const [ty, tm] = target.split('-').map(Number);
               onApply(sourceKey, ty, tm);
               onClose();
-            }}
-          >
-            Appliquer
+            }}>
+            <Lucide icon="save"/> Appliquer
           </button>
         </div>
       </div>
@@ -827,24 +825,12 @@ function TransactionList({transactions, onEdit, onDelete, monthFilter, setMonthF
   return (
     <div className="glass mt-6 md:mt-10 p-2 md:p-6 overflow-auto" style={{minWidth:'680px'}}>
       <div className="flex flex-row items-center gap-3 mb-4 flex-wrap">
-        <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-[#6366f1] neon-hover" />
+        <input type="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder="🔎 Recherche rapide..." className="bg-white/5 text-white px-3 py-2 rounded-xl outline-none focus:ring-2 focus:ring-white/30" />
         <CategoryFilter cat={cat} setCat={setCat} transactions={transactions} />
         <MonthFilter monthFilter={monthFilter} setMonthFilter={setMonthFilter} months={months} />
         <div className="flex-1"></div>
-        <button
-          className="bg-[#00d9ff] text-white font-bold px-4 py-2 rounded-xl neon-hover flex items-center gap-2"
-          onClick={openDuplicate}
-          title="Dupliquer un mois vers une autre période"
-        >
-          <Lucide icon="copy"/> Dupliquer
-        </button>
-        <button
-          className="bg-[#6366f1] text-white font-bold px-4 py-2 rounded-xl neon-hover flex items-center gap-2"
-          onClick={openHistory}
-          title="Voir tous les mois enregistrés"
-        >
-          <Lucide icon="history" color="#fff"/> Historique des mois
-        </button>
+        <button className="btn btn-secondary" onClick={openDuplicate} title="Dupliquer un mois vers une autre période"><Lucide icon="copy"/> Dupliquer</button>
+        <button className="btn" onClick={openHistory} title="Voir tous les mois enregistrés"><Lucide icon="history"/> Historique des mois</button>
       </div>
       <div className="overflow-x-auto" style={{minWidth: '680px'}}>
         <table className="min-w-full text-white/90 text-sm">
@@ -866,31 +852,31 @@ function TransactionList({transactions, onEdit, onDelete, monthFilter, setMonthF
                   <div className="flex items-center gap-2">
                     <span>{tx.title}</span>
                     {tx.link && (
-                      <a href={tx.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center text-white/80 hover:text-[#00d9ff]" title="Ouvrir le lien">
+                      <a href={tx.link} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center text-white/80 hover:opacity-90" title="Ouvrir le lien">
                         <Lucide icon="link-2" />
                       </a>
                     )}
                   </div>
                 </td>
                 <td className="py-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg" style={{background:tx.category.color+"22"}}>
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/10">
                     <Lucide icon={tx.category.icon} color={tx.category.color} size={18}/>{tx.category.name}
                   </span>
                 </td>
-                <td className="py-2 font-bold" style={{color:tx.type==="income"?"#10b981":"#ef4444"}}>
+                <td className="py-2 font-bold" style={{color:tx.type==="income"?"var(--success)":"var(--danger)"}}>
                   {tx.type==="expense"? "-": "+"}{formatAmount(tx.amount)}
                 </td>
                 <td className="py-2">{formatDate(tx.date)}</td>
-                <td className="py-2">{tx.type==="income"?<span className="font-bold text-[#10b981]">Entrée</span>:<span className="font-bold text-[#ef4444]">Sortie</span>}</td>
+                <td className="py-2">{tx.type==="income"?<span className="font-bold" style={{color:"var(--success)"}}>Entrée</span>:<span className="font-bold" style={{color:"var(--danger)"}}>Sortie</span>}</td>
                 <td className="py-2">{(tx.tags||[]).map(tag=><span key={tag} className="px-2 py-0.5 mx-1 bg-white/10 rounded-full">{tag}</span>)}</td>
                 <td className="py-2 flex gap-2">
                   {tx.link && (
-                    <a href={tx.link} target="_blank" rel="noopener noreferrer" title="Ouvrir le lien" className="hover:text-[#00d9ff]">
+                    <a href={tx.link} target="_blank" rel="noopener noreferrer" title="Ouvrir le lien" className="hover:opacity-90">
                       <Lucide icon="external-link" />
                     </a>
                   )}
-                  <button onClick={()=>onEdit(tx)} title="Éditer" className="hover:text-[#6366f1]"><Lucide icon="edit" /></button>
-                  <button onClick={()=>onDelete(tx.id)} title="Supprimer" className="hover:text-[#ef4444]"><Lucide icon="trash-2" /></button>
+                  <button onClick={()=>onEdit(tx)} title="Éditer" className="hover:opacity-90"><Lucide icon="edit" /></button>
+                  <button onClick={()=>onDelete(tx.id)} title="Supprimer" className="hover:opacity-90"><Lucide icon="trash-2" /></button>
                 </td>
               </tr>
             ))}
@@ -914,13 +900,9 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
 
   React.useEffect(()=>{
     if(tx){
-      setTitle(tx.title);
-      setAmount(tx.amount);
-      setType(tx.type);
-      setCat(tx.category.name);
-      setDate(new Date(tx.date).toISOString().slice(0,10));
-      setTags((tx.tags||[]).join(', '));
-      setLink(tx.link||"");
+      setTitle(tx.title); setAmount(tx.amount); setType(tx.type);
+      setCat(tx.category.name); setDate(new Date(tx.date).toISOString().slice(0,10));
+      setTags((tx.tags||[]).join(', ')); setLink(tx.link||"");
     } else {
       setTitle(""); setAmount(""); setType("expense"); setCat(CATEGORIES[0].name); setDate(new Date().toISOString().slice(0,10)); setTags(""); setLink("");
     }
@@ -934,11 +916,8 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
     const cleanLink = normalizeUrl(link);
     onSave({
       id: tx?.id || randomId(),
-      title,
-      amount: Number(amount),
-      date: new Date(date),
-      category: selectedCat,
-      type,
+      title, amount: Number(amount), date: new Date(date),
+      category: selectedCat, type,
       tags: tags.split(",").map(s=>s.trim()).filter(Boolean),
       link: cleanLink || ""
     });
@@ -948,7 +927,7 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
       <div className="glass max-w-lg w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
         <h2 className="text-xl font-bold text-white mb-2">{isEdit ? "Modifier" : "Ajouter"} une transaction</h2>
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -983,37 +962,18 @@ function AddOrEditModal({show, onClose, onSave, tx}) {
           <div>
             <label className="block text-white/70">Lien (facultatif)</label>
             <div className="flex gap-2">
-              <input
-                type="url"
-                inputMode="url"
-                placeholder="https://exemple.com/abonnement"
-                value={link}
-                onChange={e=>setLink(e.target.value)}
-                className="flex-1 bg-white/5 text-white rounded-xl px-3 py-2 outline-none"
-              />
+              <input type="url" inputMode="url" placeholder="https://exemple.com/abonnement" value={link} onChange={e=>setLink(e.target.value)} className="flex-1 bg-white/5 text-white rounded-xl px-3 py-2 outline-none" />
               {link && (
                 <>
-                  <a
-                    href={normalizeUrl(link)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-2 rounded-xl bg-[#00d9ff] text-white font-bold hover:opacity-90"
-                    title="Ouvrir"
-                  ><Lucide icon="external-link"/></a>
-                  <button
-                    type="button"
-                    onClick={()=>setLink("")}
-                    className="px-3 py-2 rounded-xl bg-[#ef4444] text-white font-bold hover:opacity-90"
-                    title="Supprimer le lien"
-                  ><Lucide icon="link-2-off"/></button>
+                  <a href={normalizeUrl(link)} target="_blank" rel="noopener noreferrer" className="btn btn-secondary" title="Ouvrir"><Lucide icon="external-link"/></a>
+                  <button type="button" onClick={()=>setLink("")} className="btn btn-danger" title="Supprimer le lien"><Lucide icon="link-2-off"/></button>
                 </>
               )}
             </div>
-            <p className="text-xs text-white/50 mt-1">Ajoute ici l’URL de l’abonnement (ou tout autre élément). Laisse vide pour retirer le lien.</p>
           </div>
 
-          <button type="submit" className="w-full py-2 font-bold rounded-xl neon-hover text-white bg-[#00d9ff] mt-3 transition">
-            {isEdit ? "Enregistrer" : "Ajouter"}
+          <button type="submit" className="btn w-full justify-center mt-3">
+            {isEdit ? <><Lucide icon="save"/> Enregistrer</> : <><Lucide icon="plus"/> Ajouter</>}
           </button>
         </form>
       </div>
@@ -1026,11 +986,9 @@ function SettingsModal({show, onClose}) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-40">
       <div className="glass max-w-sm w-full p-6 relative">
-        <button className="absolute top-3 right-3 text-white/80 hover:text-[#ff006e] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
+        <button className="absolute top-3 right-3 text-white/80 hover:text-[var(--danger)] text-2xl" onClick={onClose}><Lucide icon="x" size={30}/></button>
         <h2 className="text-xl font-bold text-white mb-2">Paramètres utilisateur</h2>
-        <button className="mt-4 py-2 font-bold rounded-xl neon-hover text-white bg-[#6366f1] transition" onClick={onClose}>
-          Fermer
-        </button>
+        <button className="btn w-full justify-center mt-4 transition" onClick={onClose}>Fermer</button>
       </div>
     </div>
   );
@@ -1051,9 +1009,7 @@ function useLocalTransactions() {
   React.useEffect(()=>{
     localStorage.setItem("onyx_budget_v2", JSON.stringify(transactions));
   },[transactions]);
-  function setAndSort(arr) {
-    setTransactions(sortTransactions(arr));
-  }
+  function setAndSort(arr) { setTransactions(sortTransactions(arr)); }
   return [transactions, setAndSort];
 }
 
@@ -1067,24 +1023,16 @@ function App() {
   const [showBadge, setShowBadge] = React.useState(false);
   const [badgeType, setBadgeType] = React.useState(null);
 
-  /* Default: mois courant selon date locale */
   const [monthFilter, setMonthFilter] = React.useState(monthKeyFromDate(new Date()));
-
-  /* Scope des métriques: 'month' (défaut) | 'year' */
   const [metricsScope, setMetricsScope] = React.useState('month');
   const toggleMetricsScope = ()=> setMetricsScope(s => s==='month' ? 'year' : 'month');
 
-  /* Modals */
   const [historyOpen, setHistoryOpen] = React.useState(false);
   const [dupOpen, setDupOpen] = React.useState(false);
   const [editMonthOpen, setEditMonthOpen] = React.useState(false);
   const [editMonthSource, setEditMonthSource] = React.useState(null);
 
-  React.useEffect(()=>{
-    if(showCheck){
-      setTimeout(()=>setShowCheck(false), 1100);
-    }
-  }, [showCheck]);
+  React.useEffect(()=>{ if(showCheck){ setTimeout(()=>setShowCheck(false), 1100); } }, [showCheck]);
 
   function handleAddOrEdit(tx) {
     let arr = [];
@@ -1096,7 +1044,7 @@ function App() {
     setTransactions(arr);
 
     setShowCheck(true);
-    window.confetti && window.confetti({particleCount: 100, spread: 90, origin:{ y: 0.2 }, startVelocity:32, colors:['#6366f1','#00d9ff','#ff006e','#10b981']});
+    window.confetti && window.confetti({particleCount: 100, spread: 90, origin:{ y: 0.2 }, startVelocity:32, colors:['#ef4444','#f43f5e','#ffffff']});
     if((!transactions.some(t=>t.type==="income") && tx.type==="income")) {
       setTimeout(()=>{setBadgeType("first_income");setShowBadge(true);}, 800);
       setTimeout(()=>setShowBadge(false), 3300);
@@ -1109,28 +1057,20 @@ function App() {
   function handleDelete(id) { setTransactions(transactions.filter(t=>t.id!==id)); }
   function handleExport() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions,null,2));
-    const link = document.createElement('a');
-    link.href = dataStr;
-    link.download = "transactions.json";
-    link.click();
+    const link = document.createElement('a'); link.href = dataStr; link.download = "transactions.json"; link.click();
   }
   function handleImport(e) {
-    const file = e.target.files[0];
-    if(!file) return;
+    const file = e.target.files[0]; if(!file) return;
     const reader = new FileReader();
     reader.onload = evt=>{
       try {
         const json = JSON.parse(evt.target.result);
-        if(Array.isArray(json)) setTransactions(json);
-        else alert("Fichier invalide !");
-      } catch {
-        alert("Erreur import JSON");
-      }
+        if(Array.isArray(json)) setTransactions(json); else alert("Fichier invalide !");
+      } catch { alert("Erreur import JSON"); }
     };
     reader.readAsText(file);
   }
 
-  /* Duplication: source -> cible */
   function duplicateMonthToTarget(sourceMonthKey, targetYear, targetMonth1to12) {
     const toCopy = transactions.filter(t=>monthKeyFromDate(t.date)===sourceMonthKey);
     if(!toCopy.length) { alert("Aucune transaction à copier pour ce mois."); return; }
@@ -1144,8 +1084,6 @@ function App() {
     setMonthFilter(`${targetYear}-${String(targetMonth1to12).padStart(2,'0')}`);
     setShowCheck(true);
   }
-
-  /* Déplacement (modifier la date d’un mois) */
   function moveMonthToTarget(sourceMonthKey, targetYear, targetMonth1to12) {
     const targetKey = `${targetYear}-${String(targetMonth1to12).padStart(2,'0')}`;
     const updated = transactions.map(t=>{
@@ -1157,8 +1095,6 @@ function App() {
     if(monthFilter === sourceMonthKey) setMonthFilter(targetKey);
     setShowCheck(true);
   }
-
-  /* Suppression d'un mois */
   function deleteMonth(key) {
     if(!confirm("Supprimer toutes les transactions de ce mois ? Cette action est irréversible.")) return;
     const remaining = transactions.filter(t=>monthKeyFromDate(t.date)!==key);
@@ -1189,39 +1125,17 @@ function App() {
         openHistory={()=>setHistoryOpen(true)}
         openDuplicate={()=>setDupOpen(true)}
       />
-      <AddOrEditModal
-        show={showModal}
-        onClose={()=>setShowModal(false)}
-        onSave={handleAddOrEdit}
-        tx={editTx}
-      />
+      <AddOrEditModal show={showModal} onClose={()=>setShowModal(false)} onSave={handleAddOrEdit} tx={editTx}/>
       <SettingsModal show={showSettings} onClose={()=>setShowSettings(false)}/>
       <MonthHistoryModal
-        show={historyOpen}
-        onClose={()=>setHistoryOpen(false)}
-        months={months}
+        show={historyOpen} onClose={()=>setHistoryOpen(false)} months={months}
         onShowMonth={(key)=>setMonthFilter(key)}
-        onCopyMonth={(key)=>{
-          const [y,m] = key.split('-').map(Number);
-          const next = addMonthsClamped(new Date(y, m-1, 1), 1);
-          duplicateMonthToTarget(key, next.getFullYear(), next.getMonth()+1);
-        }}
+        onCopyMonth={(key)=>{ const [y,m] = key.split('-').map(Number); const next = addMonthsClamped(new Date(y, m-1, 1), 1); duplicateMonthToTarget(key, next.getFullYear(), next.getMonth()+1); }}
         onEditMonth={(key)=>{ setEditMonthSource(key); setEditMonthOpen(true); }}
         onDeleteMonth={(key)=>deleteMonth(key)}
       />
-      <DuplicationModal
-        show={dupOpen}
-        onClose={()=>setDupOpen(false)}
-        months={months}
-        defaultSourceKey={monthFilter}
-        onDuplicate={(src, ty, tm)=>duplicateMonthToTarget(src, ty, tm)}
-      />
-      <EditMonthModal
-        show={editMonthOpen}
-        onClose={()=>setEditMonthOpen(false)}
-        sourceKey={editMonthSource}
-        onApply={(src, ty, tm)=>moveMonthToTarget(src, ty, tm)}
-      />
+      <DuplicationModal show={dupOpen} onClose={()=>setDupOpen(false)} months={months} defaultSourceKey={monthFilter} onDuplicate={(src, ty, tm)=>duplicateMonthToTarget(src, ty, tm)} />
+      <EditMonthModal show={editMonthOpen} onClose={()=>setEditMonthOpen(false)} sourceKey={editMonthSource} onApply={(src, ty, tm)=>moveMonthToTarget(src, ty, tm)} />
       <SuccessCheckmark show={showCheck} />
       <BadgeAchievement show={showBadge} type={badgeType}/>
     </div>
