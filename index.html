@@ -16,7 +16,6 @@
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 
   <style>
@@ -46,12 +45,10 @@
   </style>
 </head>
 <body>
-  <!-- Thème -->
   <button id="themeBtn" class="theme-toggle" title="Changer de thème">
     <i data-lucide="palette"></i>
   </button>
 
-  <!-- Google Auth UI -->
   <button id="googleSignIn" class="btn" style="position:fixed; top:12px; right:12px; z-index:60;">
     Se connecter
   </button>
@@ -61,7 +58,6 @@
 
   <div id="root"></div>
 
-  <!-- Init thème + branchement boutons + init Google au chargement -->
   <script>
     (function initTheme(){
       const saved = localStorage.getItem('onyx_theme');
@@ -77,15 +73,17 @@
       if (btn) btn.addEventListener('click', toggleTheme);
     })();
 
-    // Branche les boutons et lance l'auto-login persistant
+    // Branche les boutons et initie la connexion
     window.addEventListener("load", function(){
-      // Affiche directement l'état si on était connecté
+      // Note: l'affichage des boutons est géré par la logique Auth mais on peut pré-masquer si on sait qu'on est connecté
       if (localStorage.getItem("onyx_google_authed") === "1") {
         const inBtn = document.getElementById("googleSignIn");
         const outBtn = document.getElementById("googleSignOut");
         if (inBtn) inBtn.style.display = "none";
-        if (outBtn) outBtn.style.display = "inline-flex";
+        // outBtn s'affichera quand le token sera validé par initGoogleAuth
       }
+      
+      // On lance l'initialisation (qui va attendre que window.google soit prêt)
       if (typeof initGoogleAuth === "function") initGoogleAuth();
 
       const btnIn = document.getElementById("googleSignIn");
@@ -96,7 +94,7 @@
   </script>
 
   <script type="text/babel">
-/* ==================== Google Auth + Drive (persistant + sauvegarde immédiate) ==================== */
+/* ==================== Google Auth + Drive (CORRIGÉ & PERSISTANT) ==================== */
 const GOOGLE = {
   CLIENT_ID: "910313633485-js3ldfefrgtlc056i5t4go6r3b0ni0il.apps.googleusercontent.com",
   SCOPES: "https://www.googleapis.com/auth/drive.appdata openid email profile"
@@ -113,54 +111,109 @@ function setUiSignedIn(signedIn){
   if (inBtn) inBtn.style.display = signedIn ? "none" : "inline-flex";
   if (outBtn) outBtn.style.display = signedIn ? "inline-flex" : "none";
 }
+
+// Relance le token avant qu'il n'expire
 function scheduleSilentRefresh(expiresInSec=3600){
   if (refreshTimer) clearTimeout(refreshTimer);
-  const delayMs = Math.max((expiresInSec - 60), 30) * 1000;
-  refreshTimer = setTimeout(()=> tokenClient?.requestAccessToken({ prompt: "" }), delayMs);
+  // On rafraîchit 2 minutes avant l'expiration pour être sûr
+  const delayMs = Math.max((expiresInSec - 120), 30) * 1000;
+  refreshTimer = setTimeout(()=> {
+    if(tokenClient) tokenClient.requestAccessToken({ prompt: "" });
+  }, delayMs);
 }
 
 function initGoogleAuth() {
-  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+  // 1. Sécurité : Si la librairie Google n'est pas encore chargée, on attend un peu
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    // console.log("Google Auth pas encore prêt, nouvelle tentative dans 200ms...");
+    setTimeout(initGoogleAuth, 200);
+    return;
+  }
+
+  // 2. Initialisation du client
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE.CLIENT_ID,
     scope: GOOGLE.SCOPES,
-    prompt: "",
+    prompt: "", // Important : aucune interface graphique par défaut
     callback: (resp) => {
+      // Gestion des erreurs
+      if (resp.error) {
+        console.warn("Erreur Auth Google:", resp.error);
+        if(resp.error === 'interaction_required' || resp.error === 'consent_required') {
+           // Seulement si le consentement est perdu, on déconnecte
+           signOutGoogle();
+        }
+        return;
+      }
+
+      // SUCCÈS : On stocke le token en mémoire
       accessToken = resp.access_token;
       const expires = Number(resp.expires_in || 3600);
       accessTokenExpiry = Date.now() + expires*1000;
+
+      // On marque dans le navigateur que l'utilisateur est "connecté"
       localStorage.setItem("onyx_google_authed", "1");
       setUiSignedIn(true);
-      window.dispatchEvent(new Event("ONYX_SIGNED_IN")); // 1ère fois → chargement Drive
+
+      // On déclenche l'événement pour charger les données (Drive)
+      window.dispatchEvent(new Event("ONYX_SIGNED_IN"));
+      
+      // On prépare le prochain rafraîchissement automatique
       scheduleSilentRefresh(expires);
     }
   });
 
+  // 3. TENTATIVE DE RESTAURATION DE SESSION (Auto-Login au chargement)
   if (localStorage.getItem("onyx_google_authed") === "1") {
-    try { tokenClient.requestAccessToken({ prompt: "" }); }
-    catch { localStorage.removeItem("onyx_google_authed"); setUiSignedIn(false); }
+    try {
+      // On demande un token silencieusement.
+      // Si l'utilisateur a déjà autorisé l'app, ça marche sans popup.
+      tokenClient.requestAccessToken({ prompt: "" });
+    } catch (e) {
+      console.error("Erreur tentative auto-login", e);
+      // En cas de crash grave, on reset l'état
+      localStorage.removeItem("onyx_google_authed");
+      setUiSignedIn(false);
+    }
   }
 
+  // 4. Gestion de la visibilité (retour sur l'onglet)
   document.addEventListener("visibilitychange", ()=>{
     if (document.visibilityState === "visible" && accessToken) {
-      if (accessTokenExpiry - Date.now() < 90*1000) tokenClient?.requestAccessToken({ prompt: "" });
+      // Si le token est proche de l'expiration (< 2 min), on refresh
+      if (accessTokenExpiry - Date.now() < 120*1000) {
+        tokenClient?.requestAccessToken({ prompt: "" });
+      }
     }
   });
 }
 
-function signInWithGoogle(){ tokenClient?.requestAccessToken({ prompt: "consent" }); }
+// Clic bouton "Se connecter"
+function signInWithGoogle(){ 
+  // 'consent' force la fenêtre de choix si besoin
+  tokenClient?.requestAccessToken({ prompt: "consent" }); 
+}
+
+// Clic bouton "Se déconnecter"
 function signOutGoogle(){
-  try { accessToken && google?.accounts?.oauth2?.revoke?.(accessToken, ()=>{}); } catch {}
+  try { 
+    if(accessToken && window.google) google.accounts.oauth2.revoke(accessToken, ()=>{}); 
+  } catch(e) {}
+  
   accessToken = null;
   accessTokenExpiry = 0;
   if (refreshTimer) clearTimeout(refreshTimer);
+  
   localStorage.removeItem("onyx_google_authed");
   setUiSignedIn(false);
   window.dispatchEvent(new Event("ONYX_SIGNED_OUT"));
 }
+
+// Exposition globale
 window.signInWithGoogle = signInWithGoogle;
 window.signOutGoogle = signOutGoogle;
 
+// --- Drive API (inchangé) ---
 async function driveRequest(url, opts = {}) {
   if (!accessToken) throw new Error("Non authentifié");
   const headers = Object.assign({}, opts.headers || {}, { Authorization: `Bearer ${accessToken}` });
@@ -223,7 +276,7 @@ function addMonthsClamped(date,n){const d=new Date(date);const y=d.getFullYear()
 function setDateToMonth(date,y,mi){const d=new Date(date);const days=new Date(y,mi+1,0).getDate();const day=Math.min(d.getDate(),days);return new Date(y,mi,day,d.getHours(),d.getMinutes(),d.getSeconds(),d.getMilliseconds())}
 function isCurrentMonthKey(key){const now=new Date();const current=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;return key===current}
 
-/* --------- Header / Cards / Chart (identiques) --------- */
+/* --------- Header / Cards / Chart --------- */
 function BadgeAchievement({show,type}){if(!show)return null;let label,icon;if(type==="first_income"){label="Premier revenu !";icon="wallet"}else if(type==="first_saving"){label="Première épargne !";icon="piggy-bank"}else{return null}return(<div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"><div className="badge-anim-pop flex flex-col items-center px-6 py-4 rounded-3xl shadow-2xl border-2 border-white/10 glass" style={{background:"linear-gradient(135deg,rgba(20,20,36,0.97),rgba(10,0,32,0.85))"}}><Lucide icon={icon}/><span className="mt-3 text-lg font-bold text-white">{label}</span><span className="mt-1 px-3 py-1 rounded-lg text-xs" style={{background:"rgba(255,255,255,.08)"}}>{type==="first_income"?"Bravo pour ton premier revenu !":"Épargner, c'est gagner."}</span></div></div>)}
 function SuccessCheckmark({show}){if(!show)return null;return(<div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none"><div className="check-anim bg-white/90 rounded-full shadow-2xl flex items-center justify-center" style={{width:96,height:96}}><svg width="64" height="64" viewBox="0 0 52 52"><circle cx="26" cy="26" r="25" fill="none" stroke="var(--success)" strokeWidth="5"/><path fill="none" stroke="var(--success)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" d="M14 27l8 8 16-16"/></svg></div></div>)}
 function Header(){return(<header className="onyx-header flex items-center px-14 py-5 mb-4" style={{zIndex:20,position:"relative",minHeight:"80px"}}><div className="flex items-center gap-5"><img src="https://i.ibb.co/5WMnx7y6/8ba349756916.png" alt="Onyx Budget" className="h-[99px] w-[99px]" style={{objectFit:"contain",background:"none",border:"none",boxShadow:"none"}}/><span className="onyx-title">Onyx Budget V2</span></div></header>)}
@@ -252,7 +305,7 @@ function PremiumChart({transactions}){const ref=React.useRef();const{labels,data
 
 function Dashboard({transactions,metricsScope,toggleMetricsScope,onAddTx,onExport,onImport,selectedMonthKey}){return(<div><MetricsCards transactions={transactions} scope={metricsScope} toggleScope={toggleMetricsScope} selectedMonthKey={selectedMonthKey}/><div className="glass my-6 p-0 md:p-0 overflow-x-auto" style={{minWidth:'680px',maxWidth:'900px'}}><div className="p-4" style={{minWidth:'600px',maxWidth:'900px'}}><div className="font-semibold mb-2 text-white/80">Solde global (historique)</div><PremiumChart transactions={transactions}/></div></div><div className="flex flex-row gap-3 justify-end flex-wrap overflow-x-auto" style={{minWidth:'680px'}}><button className="btn" onClick={onAddTx}><Lucide icon="plus-circle"/> Ajouter transaction</button><button className="btn" onClick={onExport}><Lucide icon="download"/> Exporter JSON</button><label className="btn cursor-pointer"><Lucide icon="upload"/> Importer JSON<input type="file" accept=".json" className="hidden" onChange={onImport}/></label></div></div>)}
 
-/* ------- Sélecteurs / Filtres / Listes / Modals (inchangés) ------- */
+/* ------- Sélecteurs / Filtres / Listes / Modals ------- */
 function CategorySelect({cat,setCat,categories}){const[open,setOpen]=React.useState(false);const ref=React.useRef();React.useEffect(()=>{function h(e){if(!ref.current?.contains(e.target))setOpen(false)}if(open)window.addEventListener("mousedown",h);return()=>window.removeEventListener("mousedown",h)},[open]);return(<div className="relative" ref={ref}><button type="button" className="w-full flex items-center justify-between bg-black text-white rounded-xl px-3 py-2 outline-none border border-white/10" onClick={()=>setOpen(v=>!v)} tabIndex={-1}><span className="flex items-center gap-2"><Lucide icon={categories.find(c=>c.name===cat)?.icon||"circle"} color={categories.find(c=>c.name===cat)?.color||"#fff"} size={20}/>{cat}</span><Lucide icon="chevron-down" size={18}/></button>{open&&(<div className="absolute z-50 w-full bg-black rounded-xl mt-1 border border-white/10 max-h-60 overflow-y-auto menu-categories">{categories.map(c=>(<button type="button" key={c.name} className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white" onClick={()=>{setCat(c.name);setOpen(false);}}><Lucide icon={c.icon} color={c.color} size={20}/><span className="text-white">{c.name}</span></button>))}</div>)}</div>)}
 
 function CategoryFilter({cat,setCat,transactions}){const[open,setOpen]=React.useState(false);const ref=React.useRef();React.useEffect(()=>{function h(e){if(!ref.current?.contains(e.target))setOpen(false)}if(open)window.addEventListener("mousedown",h);return()=>window.removeEventListener("mousedown",h)},[open]);const uniqueCats=Array.from(new Set(transactions.map(t=>t.category.name)));return(<div className="relative" ref={ref}><button type="button" className="bg-black text-white px-3 py-2 rounded-xl outline-none flex items-center gap-2 border border-white/10" onClick={()=>setOpen(v=>!v)}>{cat==="all"?<><Lucide icon="list" size={18}/> Toutes catégories</>:<><Lucide icon={transactions.find(t=>t.category.name===cat)?.category.icon||"circle"} color={transactions.find(t=>t.category.name===cat)?.category.color||"#fff"} size={18}/>{cat}</>}<Lucide icon="chevron-down" size={16}/></button>{open&&(<div className="absolute z-50 bg-black rounded-xl mt-1 border border-white/10 min-w_[190px] max-h-60 overflow-y-auto menu-categories"><button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg:white/10 text-white" onClick={()=>{setCat("all");setOpen(false);}}><Lucide icon="list" size={18}/> <span>Toutes catégories</span></button>{uniqueCats.map(c=>{const catObj=transactions.find(t=>t.category.name===c)?.category;return(<button type="button" className="flex items-center gap-2 px-4 py-2 w-full hover:bg-white/10 text-left text-white" key={c} onClick={()=>{setCat(c);setOpen(false);}}><Lucide icon={catObj?.icon||"circle"} color={catObj?.color||"#fff"} size={18}/><span className="text-white">{c}</span></button>)})}</div>)}</div>)}
